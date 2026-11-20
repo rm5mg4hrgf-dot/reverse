@@ -1,0 +1,86 @@
+name: Unzip REVERSE project
+
+on:
+  workflow_dispatch:
+    inputs:
+      archive_path:
+        description: "Path to the ZIP file in the repository"
+        required: true
+        default: "reverse-product-explorer 2.zip"
+  push:
+    branches:
+      - main
+    paths:
+      - "*.zip"
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Extract project archive safely
+        env:
+          ARCHIVE_PATH: ${{ github.event.inputs.archive_path || 'reverse-product-explorer 2.zip' }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import shutil
+          import stat
+          import zipfile
+
+          archive = pathlib.Path(os.environ["ARCHIVE_PATH"])
+          if not archive.is_file() or archive.suffix.lower() != ".zip":
+              raise SystemExit(f"ZIP archive not found: {archive}")
+
+          root = pathlib.Path.cwd().resolve()
+          with zipfile.ZipFile(archive) as zf:
+              members = [m for m in zf.infolist() if not m.is_dir()]
+              if not members:
+                  raise SystemExit("The ZIP archive contains no files.")
+
+              # Flatten one common wrapper folder (e.g. project-name/index.html).
+              names = [pathlib.PurePosixPath(m.filename) for m in members]
+              first_parts = {p.parts[0] for p in names if p.parts}
+              flatten = len(first_parts) == 1 and all(len(p.parts) > 1 for p in names)
+              wrapper = next(iter(first_parts)) if flatten else None
+
+              for info, member in zip(members, names):
+                  if not member.parts or member.is_absolute() or ".." in member.parts:
+                      raise SystemExit(f"Unsafe path in ZIP: {info.filename}")
+                  mode = info.external_attr >> 16
+                  if stat.S_ISLNK(mode):
+                      raise SystemExit(f"Symbolic links are not allowed: {info.filename}")
+
+                  parts = member.parts[1:] if flatten and member.parts[0] == wrapper else member.parts
+                  if not parts:
+                      continue
+                  destination = (root / pathlib.Path(*parts)).resolve()
+                  if root not in destination.parents:
+                      raise SystemExit(f"ZIP entry escapes repository: {info.filename}")
+                  destination.parent.mkdir(parents=True, exist_ok=True)
+                  with zf.open(info) as src, destination.open("wb") as dst:
+                      shutil.copyfileobj(src, dst)
+
+          print(f"Extracted {len(members)} file(s) from {archive}.")
+          PY
+
+      - name: Commit extracted project files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- .
+          git reset --quiet -- "*.zip" || true
+          if git diff --cached --quiet; then
+            echo "No extracted file changes to commit."
+          else
+            git commit -m "Extract REVERSE project archive"
+            git push
+          fi
