@@ -45,7 +45,7 @@ small{color:var(--rose)}p{margin:.4em 0}
 <div style="padding:100px 18px 30px;max-width:1150px;margin:auto"><div class="hero"><div>
 <div class="m">Product anatomy &amp; repairability</div><h1>Everything has an inside.</h1>
 <p style="font-size:18px;color:var(--rose)">Explore the anatomy of everyday objects. Understand their components. Discover what can be repaired.</p>
-<p><button class="p" onclick="go('explore')">EXPLORE OBJECTS</button> <button onclick="document.getElementById('story').scrollIntoView()">HOW REVERSE WORKS</button> <button onclick="tour()">▶ 60-SECOND DEMO</button></p></div>
+<p><button class="p" onclick="go('explore')">EXPLORE OBJECTS</button> <button onclick="document.getElementById('story').scrollIntoView()">HOW REVERSE WORKS</button> <button onclick="tour()">▶ 30-SECOND DEMO</button></p></div>
 <div class="cv" id="heroCv"></div></div></div>
 <div class="story" id="story"><div class="sticky"><div><div class="m" id="fr">Frame 01</div><h2 id="ft">The object</h2><p id="fd" style="color:var(--rose)"></p><small>Scroll drives the real 3D model — drag it any time.</small></div><div class="cv" id="storyCv" style="height:60vh"></div></div></div>
 <div style="text-align:center;padding:60px 18px"><h2 class="rv">What went wrong? What can be repaired?</h2><p class="rv">Select a part, pick a symptom, investigate.</p><button class="p" onclick="go('lab')">ENTER THE ANATOMY LAB</button></div>
@@ -365,7 +365,27 @@ function renderFaults(){document.querySelectorAll('#sym button').forEach(b=>b.cl
  else if(S.comp){const c=byKey(S.comp);h=`<div class="glass panel"><div class="m">Investigating</div><h3>${c.name}</h3><p>${c.faults.join('; ')}</p><div class="m">Symptoms it may contribute to</div><div class="chips">${Object.entries(SYM).filter(([k])=>CAUSES[k].some(x=>x.c.includes(c.key))).map(([k,s])=>`<button onclick="S.sym='${k}';save();renderFaults()">${s[0]}</button>`).join('')}</div></div>`}
  else h='<p style="color:var(--rose)">Choose a symptom above, or investigate a component from the Anatomy Lab.</p>';
  h+='<p><button onclick="go(\'lab\')">VIEW HIGHLIGHTED PARTS IN 3D</button></p>';$('fres').innerHTML=h;lab.hl(S.hl)}
-function chain(k){return `<small>Educational possibilities, not confirmed diagnoses. Confidence is a rough rule-based label.</small>`+CAUSES[k].map(c=>`<div class="glass panel" style="margin:10px 0"><div class="chain"><span>${PN}</span><i>→</i><span>${SYM[k][0]}</span><i>→</i><span>${c.t}</span><i>→</i>${c.c.map(x=>`<span>${byKey(x).name}</span>`).join('')}</div><p>${c.why}</p><p><span class="m">Confidence</span> ${c.conf} · <span class="m">Alternative</span> ${c.alt}</p><p><span class="m">Safe check</span> ${c.chk}</p><p><small>Missing info: the model, its age, and how long it has happened.</small></p></div>`).join('')}
+const causeEvidence={};
+function chain(k){
+ const rows=CAUSES[k].map((c,i)=>{
+  const status=(causeEvidence[k]||{})[i]||'unchecked';
+  const statusText=status==='supports'?'Your observation supports this possibility.':status==='against'?'Your observation does not support this possibility.':'No observation recorded yet.';
+  return `<div class="glass panel" style="margin:10px 0"><div class="chain"><span>${PN}</span><i>→</i><span>${SYM[k][0]}</span><i>→</i><span>${c.t}</span><i>→</i>${c.c.map(x=>`<span>${byKey(x).name}</span>`).join('')}</div><p>${c.why}</p><p><span class="m">Confidence</span> ${c.conf} · <span class="m">Alternative</span> ${c.alt}</p><p><span class="m">Safe check</span> ${c.chk}</p><p><small>Missing info: the model, its age, and how long it has happened.</small></p><div class="m">Your investigation feedback</div><p data-evidence-status="${k}-${i}">${statusText}</p><div class="chips"><button type="button" data-evidence="${k}:${i}:supports" class="${status==='supports'?'on':''}">SUPPORTS THIS</button><button type="button" data-evidence="${k}:${i}:against" class="${status==='against'?'on':''}">DOES NOT SUPPORT</button><button type="button" data-evidence="${k}:${i}:unchecked" class="${status==='unchecked'?'on':''}">NOT CHECKED</button></div></div>`;
+ }).join('');
+ const state=causeEvidence[k]||{};
+ const yes=Object.values(state).filter(v=>v==='supports').length;
+ const no=Object.values(state).filter(v=>v==='against').length;
+ const pending=CAUSES[k].length-yes-no;
+ return `<small>Educational possibilities, not confirmed diagnoses. Confidence is a rough rule-based label.</small><div class="light" style="margin:10px 0"><div class="m">Investigation summary</div><b>${yes} observations support · ${no} do not support · ${pending} not checked</b><p>Use these observations to compare possibilities; they do not establish a confirmed fault.</p></div>`+rows;
+}
+$('fres').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-evidence]');
+ if(!b)return;
+ const [k,i,v]=b.dataset.evidence.split(':');
+ causeEvidence[k]=causeEvidence[k]||{};
+ causeEvidence[k][i]=v;
+ renderFaults();
+});
 // ---------- ASK ----------
 function matchSym(t){const w=t.toLowerCase().match(/[a-z']+/g)||[];let best=null,bs=0;for(const[k,s]of Object.entries(SYM)){const sc=s[1].split(' ').filter(x=>w.some(y=>y.startsWith(x.slice(0,4)))).length;if(sc>bs){bs=sc;best=k}}return best}
 function answer(t){const lo=t.toLowerCase();let h='';
