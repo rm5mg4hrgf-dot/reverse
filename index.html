@@ -1,0 +1,773 @@
+0001 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>REVERSE — Understand what’s inside</title>
+0002 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+0003 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Inter:wght@400;500&family=JetBrains+Mono&display=swap">
+0004 <style>
+0005 :root{--bg:#211719;--wine:#512B34;--berry:#873F4B;--rose:#D8BDB4;--bone:#F0E9DF;--dk:#30282A;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset
+■ -bottom,0px)}
+0006 *{box-sizing:border-box}html{scroll-behavior:smooth}
+0007 body{margin:0;background:var(--bg);color:var(--bone);font:15px/1.55 Inter,system-ui,sans-serif}
+0008 h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:400;margin:.2em 0}
+0009 h1{font-size:clamp(40px,9vw,92px);line-height:1}h2{font-size:clamp(26px,4vw,40px)}
+0010 .m{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--rose)}
+0011 .glass{background:rgba(81,43,52,.45);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border:1px solid rgba(240,233,223,.18);box-shadow:inset 0 1px 0
+■ rgba(255,255,255,.12),0 10px 30px rgba(0,0,0,.35);border-radius:18px}
+0012 nav{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:2px;padding:5px;max-width:96vw;overflow-x:auto}
+0013 nav b{font-family:Fraunces,serif;padding:6px 12px;letter-spacing:.15em}
+0014 button,input,select,textarea{font:inherit;color:inherit}
+0015 button{background:transparent;border:1px solid rgba(240,233,223,.2);border-radius:12px;padding:7px 12px;cursor:pointer;transition:.2s;white-space:nowrap}
+0016 button:hover{background:rgba(135,63,75,.5)}button.on,button.p{background:var(--berry);border-color:var(--berry)}
+0017 nav button{border:0}
+0018 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--rose)}
+0019 input,select,textarea{background:rgba(33,23,25,.6);border:1px solid rgba(240,233,223,.2);border-radius:10px;padding:8px 10px;width:100%}
+0020 section.pg{display:none;min-height:100vh;padding:90px 18px 60px;max-width:1150px;margin:auto}section.pg.on{display:block;animation:in .4s}
+0021 @keyframes in{from{opacity:0;transform:translateY(10px)}}
+0022 .hero{display:grid;gap:20px;align-items:center;grid-template-columns:1fr}@media(min-width:850px){.hero{grid-template-columns:1fr 1fr}}
+0023 .cv{width:100%;height:420px;border-radius:18px;overflow:hidden;position:relative;background:radial-gradient(circle at 50% 40%,#512B34,#211719 75%);touch-action:none}
+0024 .cv canvas{display:block;width:100%;height:100%}
+0025 .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+0026 .card{padding:16px;background:var(--wine);border-radius:16px;border:1px solid rgba(216,189,180,.2)}.card.dis{opacity:.5}
+0027 .lab{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:900px){.lab{grid-template-columns:1.5fr 1fr}}
+0028 .lab .cv{height:min(66vh,560px)}
+0029 .tb{position:absolute;left:10px;right:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;padding:8px;align-items:center}
+0030 .tb input[type=range]{width:110px;padding:0}
+0031 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+0032 .chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}.chain span{background:var(--berry);border-radius:8px;padding:3px 9px;font-size:13px}.chain i{color:var(--rose)}
+0033 .bar{height:10px;background:var(--dk);border-radius:6px;overflow:hidden}.bar div{height:100%;background:var(--berry);width:0;transition:width 1s}
+0034 .panel{padding:16px}.light{background:var(--bone);color:var(--bg);border-radius:16px;padding:16px}.light .m{color:var(--berry)}
+0035 .rv{opacity:0;transform:translateY(24px);transition:.8s}.rv.s{opacity:1;transform:none}
+0036 .story{height:300vh;position:relative}.sticky{position:sticky;top:0;height:100vh;display:grid;align-items:center;gap:14px;padding:70px 18px 20px;max-width:1150px;margin:auto;grid-template-co
+■ lumns:1fr}@media(min-width:850px){.sticky{grid-template-columns:1fr 1.2fr}}
+0037 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+0038 small{color:var(--rose)}p{margin:.4em 0}
+0039
+0040 body{background:radial-gradient(1200px 600px at 70% -10%,#3a2027 0%,var(--bg) 60%) fixed}
+0041 .card{transition:transform .25s,border-color .25s,box-shadow .25s}.card:hover{transform:translateY(-4px);border-color:var(--berry);box-shadow:0 14px 30px rgba(0,0,0,.35)}
+0042 button:active{transform:scale(.97)}button:disabled{opacity:.4;cursor:not-allowed}
+0043 .ld{position:absolute;inset:0;display:grid;place-items:center;color:var(--rose);font:11px 'JetBrains Mono',monospace;letter-spacing:.12em;z-index:2;pointer-events:none;background:rgba(33,23,
+■ 25,.6)}
+0044 .ld::before{content:'';width:22px;height:22px;border:2px solid var(--wine);border-top-color:var(--rose);border-radius:50%;animation:sp 1s linear infinite;position:absolute;margin-top:-34px}@
+■ keyframes sp{to{transform:rotate(360deg)}}
+0045 .lbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}.lbs span{position:absolute;transform:translate(-50%,-130%);font:10px 'JetBrains Mono',monospace;letter-spacing:.06em;text-
+■ transform:uppercase;background:rgba(33,23,25,.8);border:1px solid rgba(216,189,180,.35);border-radius:8px;padding:2px 7px;white-space:nowrap}
+0046 .tip{position:absolute;pointer-events:none;background:rgba(33,23,25,.92);border:1px solid var(--berry);border-radius:8px;padding:3px 9px;font-size:12px;display:none;z-index:3}
+0047 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;transition:.3s;z-index:60;padding:10px 18px;pointer-events:none}#t
+■ oast.s{opacity:1;transform:translate(-50%,0)}
+0048 #jp{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(720px,94vw);z-index:50;padding:16px 18px;display:none}#jp h3{margin:.1em
+■ 0}#jp p{margin:.3em 0 .8em}
+0049 body.jm section.pg{padding-bottom:280px}
+0050 .pulse{outline:2px solid var(--rose);outline-offset:4px;border-radius:12px;animation:pu 1.2s infinite}@keyframes pu{50%{outline-color:transparent}}
+0051 .flow{display:grid;gap:6px}.fb{padding:14px 16px;cursor:pointer;border-radius:16px;border:1px solid rgba(216,189,180,.25);background:var(--wine);transition:.2s}.fb:hover,.fb.on{border-color:
+■ var(--berry);background:#5d3039}.fb h3{margin:.1em 0}
+0052 .fa{height:24px;margin:0 auto;width:2px;background:repeating-linear-gradient(var(--rose) 0 6px,transparent 6px 12px);background-size:2px 12px;animation:fl 1s linear infinite}@keyframes fl{to
+■ {background-position:0 12px}}
+0053 .st{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0;max-width:720px}.st div{padding:12px;border:1px solid rgba(216,189,180,.25);border-radius:14p
+■ x;background:rgba(81,43,52,.5)}.st b{font:600 30px Fraunces,Georgia,serif;display:block}
+0054 .tr{border-left:2px solid var(--berry);padding:6px 0 6px 14px;margin:8px 0;opacity:0;transform:translateX(-8px);transition:.5s;max-width:720px}.tr.s{opacity:1;transform:none}
+0055 footer{padding:30px 18px 70px;text-align:center;color:var(--rose);font:11px 'JetBrains Mono',monospace;letter-spacing:.08em}
+0056 @media(max-width:600px){nav{font-size:13px}section.pg{padding-top:84px}.tb{gap:4px}.tb button{padding:6px 8px;font-size:12px}h1{font-size:42px}}
+0057 </style></head><body>
+0058 <div id="tb2" class="glass" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;padding:10px 16px;max-width:
+■ 92vw;text-align:center"></div>
+0059 <div id="toast" class="glass" role="status" aria-live="polite"></div>
+0060 <div id="jp" class="glass" role="dialog" aria-label="Judge tour"><div class="m" id="jn"></div><h3 id="jt"></h3><p id="jx"></p><button id="jb">BACK</button> <button class="p" id="jf">NEXT</bu
+■ tton> <button id="je">EXIT TOUR</button></div>
+0061 <nav class="glass" id="nav"><b>REVERSE</b></nav>
+0062
+0063 <section class="pg on" id="home" style="max-width:none;padding:0">
+0064 <div style="padding:100px 18px 30px;max-width:1150px;margin:auto"><div class="hero"><div>
+0065 <div class="m">Product anatomy &amp; repairability</div><h1>Everything has an inside.</h1>
+0066 <p style="font-size:18px;color:var(--rose)">Explore the anatomy of everyday objects. Understand their components. Discover what can be repaired.</p>
+0067 <p><button class="p" onclick="go('explore')">EXPLORE OBJECTS</button> <button onclick="document.getElementById('story').scrollIntoView()">HOW REVERSE WORKS</button> <button class="p" onclick
+■ ="judge()">JUDGE TOUR</button> <button onclick="tour()">■ 60-SECOND DEMO</button></p><div class="st" id="hst"></div></div>
+0068 <div class="cv" id="heroCv"></div></div></div>
+0069 <div class="story" id="story"><div class="sticky"><div><div class="m" id="fr">Frame 01</div><h2 id="ft">The object</h2><p id="fd" style="color:var(--rose)"></p><small>Scroll drives the real
+■ 3D model — drag it any time.</small></div><div class="cv" id="storyCv" style="height:60vh"></div></div></div>
+0070 <div style="text-align:center;padding:60px 18px"><h2 class="rv">What went wrong? What can be repaired?</h2><p class="rv">Select a part, pick a symptom, investigate.</p><button class="p" oncl
+■ ick="go('lab')">ENTER THE ANATOMY LAB</button></div>
+0071 </section>
+0072
+0073 <section class="pg" id="explore"><div class="m">Explore</div><h2>Product catalogue</h2>
+0074 <div style="display:grid;gap:8px;grid-template-columns:2fr 1fr;max-width:600px"><input id="q" placeholder="Search products, parts, symptoms…" aria-label="Search"><select id="cat"><option val
+■ ue="">All categories</option></select></div>
+0075 <div id="res" style="margin-top:16px"></div></section>
+0076
+0077 <section class="pg" id="lab"><div class="m">Anatomy lab · <span class="pn"></span></div><h2>Drag to orbit · scroll/pinch to zoom · tap a part</h2><small id="sch" style="display:none">Schemat
+■ ic model: parts are simple stacked shapes, not true geometry. Component text is general educational information.</small>
+0078 <div class="lab"><div class="cv" id="labCv"><div class="tb glass" id="tb">
+0079 <button id="bEx">EXPLODED VIEW</button><input id="sl" type="range" min="0" max="1" step=".01" value="0" aria-label="Explosion intensity">
+0080 <button id="bIso">ISOLATE</button><button id="bLb">LABELS</button><select id="vw" style="width:auto" aria-label="Camera"><option value="iso">Isometric</option><option value="front">Front</op
+■ tion><option value="side">Side</option><option value="top">Top</option></select><button id="bRs">RESET</button></div></div>
+0081 <div class="glass panel" id="insp"></div></div>
+0082 <div class="chips" id="chipsC"></div></section>
+0083
+0084 <section class="pg" id="faults"><div class="m">Fault library</div><h2>Product → Symptom → Cause → Component</h2><div class="chips" id="sym"></div><div id="fres"></div></section>
+0085
+0086 <section class="pg" id="ask"><div class="m">Ask REVERSE</div><h2>Describe the problem in your own words</h2>
+0087 <div class="light"><small style="color:var(--berry)">Powered by Claude when this page runs inside claude.ai (it is given only the product database and told not to invent parts). Otherwise, o
+■ r if AI fails, a rule-based engine answers from the same database. Educational possibilities, not diagnoses.</small></div>
+0088 <div class="m" style="margin-top:14px">Example scenarios (runs the real engine)</div><div class="chips" id="scn"></div><div id="chat" style="margin:12px 0"></div>
+0089 <form id="af" class="glass panel" onsubmit="return false"><textarea id="at" rows="2" placeholder="Describe what is going wrong"></textarea><p><button class="p" id="ab">INVESTIGATE</button> <
+■ button id="mic" style="display:none">■ SPEAK</button> <button id="dl" style="display:none">■ SAVE REPORT</button></p></form></section>
+0090
+0091 <section class="pg" id="repair"><div class="m">Repairability · REVERSE educational assessment (not a certification)</div><h2 class="pn"></h2>
+0092 <div class="grid" id="rf"></div><p id="rs"></p>
+0093 <h2 style="margin-top:30px">Repair or replace?</h2>
+0094 <div class="glass panel" style="max-width:600px"><label>Product age (years)<input id="age" type="number" min="0"></label><label>Condition<select id="cond"><option>Good</option><option>Worn</
+■ option><option>Poor</option></select></label>
+0095 <label>Estimated repair cost<input id="rc" type="number" min="0"></label><label>Estimated replacement cost<input id="pc" type="number" min="0"></label>
+0096 <label>Replacement parts available?<select id="pa"><option>Yes</option><option>No</option><option>Unknown</option></select></label><label>Other problems?<select id="op"><option>No</option><o
+■ ption>Yes</option></select></label>
+0097 <div id="dres" style="margin-top:10px"></div></div></section>
+0098
+0099 <section class="pg" id="maint"><div class="m">Maintenance library</div><h2><span class="pn"></span> care</h2><div class="grid" id="mg"></div></section>
+0100
+0101 <section class="pg" id="how"><div class="m">How it works</div><h2>From product data to possible causes</h2>
+0102 <p style="color:var(--rose);max-width:720px">REVERSE is a static website. Everything runs in your browser from structured product data in this page. Tap a stage to mark it.</p>
+0103 <div class="st" id="hs"></div><div class="flow" id="fl" style="max-width:720px"></div>
+0104 <h2 style="margin-top:30px">Run the engine step by step</h2>
+0105 <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr auto;max-width:720px"><select id="trp" aria-label="Product"></select><select id="trs" aria-label="Symptom"></select><button cla
+■ ss="p" id="trb">RUN ENGINE</button></div><div id="trr" style="margin-top:12px"></div></section>
+0106 <section class="pg" id="about"><div class="m">About</div><h2>Understand what’s inside.</h2><p style="max-width:640px;color:var(--rose)">REVERSE is an educational product-anatomy platform. Co
+■ mponent information here is general educational content, not model-specific documentation. Nothing here is an instruction to dismantle hazardous devices. Thirty-two products are included, ea
+■ ch with its own multi-part 3D model built from simple shapes, plus general educational data.</p><h3>Why it matters</h3><p style="max-width:640px;color:var(--rose)">Many people throw away obj
+■ ects without knowing what is inside or whether one small part failed. REVERSE makes that structure visible so a person can ask better questions, try safe checks, and judge repair versus repl
+■ acement. It supports the right-to-repair idea of understanding the things you own.</p><h3>How it is built</h3><p style="max-width:640px;color:var(--rose)">Interactive 3D (Three.js) with ever
+■ y part its own mesh; a structured component, fault and repairability database; a relationship engine; an AI layer constrained to that database; and a rule-based fallback. Next: more products
+■ , part dragging, community-verified documentation.</p></section>
+0107
+0108 <footer>REVERSE · EDUCATIONAL PRODUCT ANATOMY · ASSESSMENTS ARE NOT OFFICIAL CERTIFICATIONS</footer>
+0109 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+0110 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+0111 <script>
+0112 const $=id=>document.getElementById(id);
+0113 if(typeof THREE==='undefined'){window.__no3d=1;window.THREE=(function mk(){return new Proxy(function(){},{get:(t,k)=>k==='then'?undefined:(k===Symbol.toPrimitive?()=>'':mk()),apply:()=>mk(),
+■ construct:()=>mk(),set:()=>true})})()}
+0114 // ---------- DATA ----------
+0115 const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),Cy=(r,h,z)=>{const g=new THREE.CylinderGeometry(r,r,h,20);if(z)g.rotateX(Math.PI/2);return g};
+0116 const helix=(L=2.2,r=.11,n=9,x0=-1.2)=>{const pts=[];for(let i=0;i<=80;i++){const a=i/80*Math.PI*2*n;pts.push(new THREE.Vector3(x0+i/80*L,Math.cos(a)*r,Math.sin(a)*r))}return new THREE.TubeG
+■ eometry(new THREE.CatmullRomCurve3(pts),200,.018,6)};
+0117 const STAP=[
+0118 {id:'REV-01',key:'base',name:'Base plate',cat:'Structure',g:B(4.2,.18,1.1),p:[0,0,0],e:[0,-1.2,0],col:0x30282A,
+0119 desc:'Flat plate that rests on the desk and carries the anvil.',fn:'Supports the stapler and holds the anvil at the correct position under the driver blade.',
+0120 faults:['Cracked or warped plate','Rubber/foot loss causing sliding'],sym:['bend'],rel:['anvil','hinge'],maint:'Wipe with a dry or lightly damp cloth.',rep:'Usually part of the base assembl
+■ y; separate replacement unknown.',rc:'Unknown'},
+0121 {id:'REV-02',key:'anvil',name:'Anvil',cat:'Clinching',g:B(.7,.06,.5),p:[1.5,.13,0],e:[0,-.5,0.9],col:0xBBB5AD,
+0122 desc:'Hardened plate with grooves that shape the staple legs.',fn:'Folds the staple legs inward after they pass through the paper.',
+0123 faults:['Worn grooves','Misalignment with driver blade'],sym:['bend','out'],rel:['driver','base'],maint:'Keep free of paper dust and adhesive residue.',rep:'Often integrated into the base;
+■ separate replacement is not documented here.',rc:'Unknown'},
+0124 {id:'REV-03',key:'hinge',name:'Hinge pin',cat:'Pivot',g:Cy(.07,1.0,true),p:[-1.95,.55,0],e:[-1.2,.7,0],col:0xBBB5AD,
+0125 desc:'Metal pin forming the pivot between the top arm and base.',fn:'Lets the arm swing down so the driver blade can travel through its stroke.',
+0126 faults:['Stiffness from dirt','Loose or bent pin'],sym:['hard'],rel:['arm','base'],maint:'Keep clear of debris; avoid forcing.',rep:'Generally permanent in common designs; replacement info
+■ unknown.',rc:'Unknown'},
+0127 {id:'REV-04',key:'mag',name:'Staple magazine',cat:'Feeding',g:B(3.5,.3,.55),p:[-.1,.42,0],e:[0,.9,0],col:0x873F4B,
+0128 desc:'Channel that holds a stick of staples.',fn:'Guides staples toward the front where the driver blade fires them.',
+0129 faults:['Bent staples jamming the channel','Wrong staple size','Debris in channel'],sym:['out','feed','bend'],rel:['spring','pusher','driver'],maint:'Use matching staples; clear only with t
+■ he stapler unloaded.',rep:'Typically part of the arm assembly; separate replacement unknown.',rc:'Unknown'},
+0130 {id:'REV-05',key:'spring',name:'Pusher spring',cat:'Feeding',g:helix(),p:[-.3,.42,0],e:[-.3,1.9,0],col:0xD8BDB4,
+0131 desc:'Coil spring pressing the pusher toward the front of the magazine.',fn:'Provides steady force so staples keep advancing as they are used.',
+0132 faults:['Weak or stretched spring','Spring caught or unseated'],sym:['out','feed'],rel:['pusher','mag'],maint:'Do not stretch it; keep clean.',rep:'Sometimes a small spare part; availabilit
+■ y unknown.',rc:'Unknown'},
+0133 {id:'REV-06',key:'pusher',name:'Pusher',cat:'Feeding',g:B(.35,.2,.4),p:[.9,.42,0],e:[.9,1.3,0],col:0xE5DED4,
+0134 desc:'Small block pushed by the spring against the back of the staple stick.',fn:'Transfers spring force to the staples.',
+0135 faults:['Sticking in the channel','Tilting or jamming'],sym:['feed','out'],rel:['spring','mag'],maint:'Keep channel clean.',rep:'Often captive with the spring; separate replacement unknown.
+■ ',rc:'Unknown'},
+0136 {id:'REV-07',key:'driver',name:'Driver blade',cat:'Driving',g:B(.6,.65,.08),p:[1.5,.65,0],e:[1.7,1.5,0],col:0xD7D2CA,
+0137 0138 desc:'Thin metal blade at the front of the arm.',fn:'Pushes the front staple down through the paper when the arm is pressed.',
+faults:['Bent or worn blade','Rubbing against the magazine','Not reaching the staple'],sym:['out','hard','bend'],rel:['mag','arm','anvil'],maint:'Do not touch the blade edge; keep the stapl
+■ er closed when stored.',rep:'Usually integrated into the arm; a specialist or replacement unit is generally needed.',rc:'Higher'},
+0139 {id:'REV-08',key:'arm',name:'Top arm',cat:'Structure',g:B(4.0,.2,.8),p:[0,.95,0],e:[0,2.5,0],col:0x512B34,
+0140 desc:'The pressed lever that carries the magazine and driver blade.',fn:'Transfers hand force to the driver blade and returns it to rest.',
+0141 faults:['Flexing or cracking','Poor return after pressing'],sym:['hard','out'],rel:['hinge','driver','mag'],maint:'Press centred; avoid exceeding the paper capacity.',rep:'Not separately re
+■ placeable in common designs (not documented here).',rc:'Higher'},
+0142 {id:'REV-09',key:'strip',name:'Staple strip',cat:'Consumable',g:B(3.2,.14,.3),p:[-.1,.48,0],e:[0,1.1,.9],col:0xD7D2CA,desc:'Row of glued staples loaded into the magazine.',fn:'Supplies stapl
+■ es that the driver blade fires one at a time.',faults:['Bent or damaged staples','Wrong size for the stapler'],rel:['mag','driver'],maint:'Use the staple size marked on the stapler.',rep:'Co
+■ nsumable; replaced by reloading.',rc:'Low'},
+0143 {id:'REV-10',key:'foot',name:'Rubber foot',cat:'Support',g:Cy(.22,.08),p:[-1.6,-.1,0],e:[0,-2,0],col:0x1d1517,desc:'Non-slip pad under the base plate.',fn:'Stops the stapler sliding on the d
+■ esk.',faults:['Worn or missing pad','Hardened rubber'],rel:['base'],maint:'Wipe with a dry cloth.',rep:'Often a glued pad; availability unknown.',rc:'Unknown'}];
+0144 const SYM_S={out:['Staples are not coming out','staple out come fire jam nothing empty'],hard:['The stapler is difficult to press','hard difficult press stiff tight force squeak'],bend:['Sta
+■ ples are bending','bend bent fold crumple flat curl'],feed:['The magazine is not feeding correctly','feed magazine load spring advance push']};
+0145 const CAUSES_S={out:[
+0146 {t:'Jammed or bent staples in the magazine',c:['mag','driver','strip'],conf:'Medium',why:'A jam blocks the front staple from reaching the driver blade.',alt:'Wrong staple size',chk:'Check, w
+■ ith the stapler unloaded, whether the staple stick is the correct size and straight.'},
+0147 {t:'Pusher not advancing staples',c:['spring','pusher'],conf:'Medium',why:'Without spring force the staples do not sit at the front.',alt:'Debris in the channel',chk:'See whether the pusher
+■ slides freely by hand.'},
+0148 {t:'Blade not completing its stroke',c:['driver','arm','hinge'],conf:'Low',why:'A stiff pivot or bent blade can stop the stroke short.',alt:'Paper stack too thick',chk:'Try a single sheet an
+■ d note what happens.'}],
+0149 hard:[{t:'Paper stack beyond capacity',c:['arm','driver'],conf:'Medium',why:'Thick stacks need more force than the mechanism is designed for.',alt:'Stiff pivot',chk:'Try fewer sheets.'},
+0150 {t:'Stiff or dirty pivot',c:['hinge','arm'],conf:'Low',why:'Friction at the pivot raises press force.',alt:'Blade rubbing',chk:'Check for dirt or visible binding at the pivot.'},
+0151 {t:'Blade rubbing in the magazine',c:['driver','mag'],conf:'Low',why:'Misalignment can add friction through the stroke.',alt:'Bent arm',chk:'Look for scuff marks near the blade.'}],
+0152 bend:[{t:'Worn or misaligned anvil',c:['anvil','base'],conf:'Medium',why:'Staple legs rely on the anvil grooves to fold cleanly.',alt:'Wrong staple type',chk:'Inspect the anvil for flattened
+■ grooves.'},
+0153 {t:'Damaged driver blade',c:['driver'],conf:'Low',why:'A bent blade pushes unevenly and can crumple staples.',alt:'Thick paper',chk:'Look for visible bending of the blade.'},
+0154 {t:'Wrong or poor-quality staples',c:['mag','strip'],conf:'Medium',why:'Mismatched staples may not seat correctly.',alt:'Anvil wear',chk:'Compare staple size with the stapler markings.'}],
+0155 feed:[{t:'Weak or unseated spring',c:['spring','pusher'],conf:'Medium',why:'Reduced spring force fails to advance staples.',alt:'Pusher sticking',chk:'Check the spring is seated and moves.'}
+■ ,
+0156 {t:'Debris or bent staples in the channel',c:['mag','pusher'],conf:'Medium',why:'Obstructions stop the pusher.',alt:'Wrong staples',chk:'Look into the channel for debris.'}]};
+0157 let COMPS,SYM,CAUSES,FACT,MAINT,PN,PID;const byKey=k=>COMPS.find(c=>c.key==k);
+0158 const FACT_S=[['Component accessibility',3,'Main parts are visible once the arm is lifted (general design).'],['Modularity',2,'Parts are often grouped into larger assemblies.'],['Fastener /
+■ assembly complexity',2,'Pins and rivets are commonly permanent.'],['Replacement parts availability',null,'Not documented in this build.'],['Repair documentation availability',null,'Not docum
+■ ented in this build.'],['Independent part replacement',2,'Few parts documented as separately replaceable.']];
+0159 const MAINT_S=[['Schedule','Occasional clean every few months with regular use.'],['Cleaning','Dry or slightly damp cloth; keep dust out of the magazine.'],['Preventive care','Use matching s
+■ taples; do not exceed paper capacity.'],['Storage','Keep closed, dry, and away from small children.'],['Common mistakes','Stapling over-thick stacks; mixing staple sizes.'],['Safety','Blade
+■ and staples are sharp. Keep fingers clear and unload before cleaning. Specialist or adult help for anything beyond cleaning.']];
+0160 const Cx=(r,h)=>{const g=new THREE.CylinderGeometry(r,r,h,20);g.rotateZ(Math.PI/2);return g};
+0161 const UMB=[
+0162 {id:'UMB-01',key:'handle',name:'Handle',cat:'Grip',g:(g=>{g.rotateZ(Math.PI);return g})(new THREE.TorusGeometry(.25,.06,8,14,Math.PI)),p:[0,-.8,0],e:[0,-1,0],col:0x30282A,desc:'Curved grip a
+■ t the bottom of the shaft.',fn:'Lets you hold and carry the umbrella.',faults:['Loosening from the shaft','Cracking'],rel:['shaft'],maint:'Wipe dry after use.',rep:'Usually attached permanen
+■ tly; separate replacement unknown.',rc:'Unknown'},
+0163 {id:'UMB-02',key:'shaft',name:'Central shaft',cat:'Structure',g:Cy(.04,2.4),p:[0,.4,0],e:[0,-.3,0],col:0xBBB5AD,desc:'Long central rod the runner slides along.',fn:'Carries the load from the
+■ canopy to the handle.',faults:['Bending','Corrosion'],rel:['runner','handle','catch'],maint:'Dry before storing to limit corrosion.',rep:'Not separately replaceable in common designs.',rc:'
+■ Higher'},
+0164 {id:'UMB-03',key:'runner',name:'Runner',cat:'Mechanism',g:Cy(.1,.4),p:[0,.7,0],e:[1.2,0,0],col:0xE5DED4,desc:'Sliding collar on the shaft, linked to the ribs.',fn:'Moves up the shaft to open
+■ the canopy and down to close it.',faults:['Binding on the shaft','Cracked collar'],rel:['shaft','catch','ribs'],maint:'Keep the shaft clean and dry.',rep:'Replacement availability unknown.'
+■ ,rc:'Unknown'},
+0165 {id:'UMB-04',key:'catch',name:'Spring catch',cat:'Mechanism',g:B(.1,.14,.1),p:[.06,1.3,0],e:[-1.2,.3,0],col:0xD8BDB4,desc:'Small spring-loaded catch on the shaft.',fn:'Holds the runner in th
+■ e open or closed position.',faults:['Worn catch not holding','Catch stuck'],rel:['runner','shaft'],maint:'Keep free of dirt; avoid forcing.',rep:'Small part, usually riveted; separate replac
+■ ement unknown.',rc:'Higher'},
+0166 {id:'UMB-05',key:'ribs',name:'Ribs',cat:'Frame',g:new THREE.ConeGeometry(1.55,.7,8,1,true),wf:1,p:[0,1.65,0],e:[0,1.3,0],col:0xBBB5AD,desc:'Radial metal arms that form the canopy frame (show
+■ n as lines).',fn:'Spread the fabric into shape and carry wind load.',faults:['Bent or snapped rib','Loose joints'],rel:['canopy','runner'],maint:'Open fully to dry.',rep:'Individual rib repl
+■ acement is uncommon; availability unknown.',rc:'Higher'},
+0167 {id:'UMB-06',key:'canopy',name:'Canopy',cat:'Cover',g:new THREE.ConeGeometry(1.5,.68,16,1,true),w:1,o:.75,p:[0,1.66,0],e:[0,2.4,0],col:0x873F4B,desc:'Fabric cover stretched over the ribs.',f
+■ n:'Sheds rain and transfers wind force to the ribs.',faults:['Tears','Loose tension'],rel:['ribs'],maint:'Brush off dirt; air dry open.',rep:'Often not replaceable; sewing small tears may be
+■ possible.',rc:'Medium'}];
+0168 const PEN=[
+0169 {id:'PEN-01',key:'barrel',name:'Barrel',cat:'Body',g:Cx(.22,2.8),o:.4,p:[0,.3,0],e:[0,0,1.6],col:0x873F4B,desc:'Outer body of the pen (shown translucent).',fn:'Holds the refill and mechanism
+■ and gives the grip.',faults:['Cracking','Mechanism seat worn'],rel:['refill','click'],maint:'Wipe clean.',rep:'Usually the pen body is the product itself.',rc:'Unknown'},
+0170 {id:'PEN-02',key:'refill',name:'Ink refill',cat:'Writing',g:Cx(.07,3.2),p:[-.1,.3,0],e:[0,.9,0],col:0x30282A,desc:'Narrow tube of ink ending in the writing tip.',fn:'Stores ink and feeds it
+■ to the tip.',faults:['Dried ink','Air blockage'],rel:['tip','spring'],maint:'Store capped or retracted.',rep:'Often replaceable as a refill; compatibility varies.',rc:'Low'},
+0171 {id:'PEN-03',key:'tip',name:'Ball tip',cat:'Writing',g:(g=>{g.rotateZ(-Math.PI/2);return g})(new THREE.ConeGeometry(.1,.3,12)),p:[1.65,.3,0],e:[1.4,0,0],col:0xD7D2CA,desc:'Metal tip holding
+■ a tiny rolling ball.',fn:'Rolls ink onto the paper.',faults:['Clogging','Damaged ball seat'],rel:['refill'],maint:'Retract after use.',rep:'Part of the refill.',rc:'Low'},
+0172 {id:'PEN-04',key:'spring',name:'Return spring',cat:'Mechanism',g:helix(),p:[-.1,.3,0],e:[0,-1,0],col:0xD8BDB4,desc:'Coil spring around the refill.',fn:'Pushes the refill back when the pen is
+■ retracted.',faults:['Weak or stretched spring','Unseated spring'],rel:['click','refill'],maint:'None needed.',rep:'Small part; availability unknown.',rc:'Unknown'},
+0173 {id:'PEN-05',key:'click',name:'Click mechanism',cat:'Mechanism',g:Cx(.14,.5),p:[-1.65,.3,0],e:[-1.5,0,0],col:0xE5DED4,desc:'Push button and latch at the top end.',fn:'Alternately locks the t
+■ ip out or lets the spring retract it.',faults:['Worn latch not holding','Sticky button'],rel:['spring','barrel'],maint:'Keep dry and free of dust.',rep:'Usually not repaired separately.',rc:
+■ 'Unknown'}];
+0174 const DB=[
+0175 {id:'stapler',n:'Manual stapler',c:'Everyday mechanical objects',d:'Pivoting arm, spring-fed magazine and driver blade.',comps:STAP,SYM:SYM_S,CAUSES:CAUSES_S,FACT:FACT_S,MAINT:MAINT_S},
+0176 {id:'umbrella',n:'Umbrella',c:'Personal accessories',d:'Canopy, ribs and a runner that slides on the shaft.',comps:UMB,
+0177 SYM:{fold:['Canopy folds back in light wind','fold wind inside flip collapse blow'],stick:['Hard to open or close','stuck hard open close stiff jam'],stay:['Will not stay open','stay open f
+■ all close slips down']},
+0178 CAUSES:{fold:[{t:'Flexed or bent ribs',c:['ribs','canopy'],conf:'Medium',why:'Ribs that no longer hold their curve let wind push the canopy inward.',alt:'Loose canopy tension',chk:'Open it
+■ and look for ribs that sit unevenly.'},{t:'Slack canopy fabric',c:['canopy','ribs'],conf:'Low',why:'Loose fabric can billow and flip.',alt:'Bent ribs',chk:'Check the fabric is evenly stretch
+■ ed.'}],
+0179 stick:[{t:'Runner binding on the shaft',c:['runner','shaft'],conf:'Medium',why:'Dirt or a bent shaft adds friction.',alt:'Bent rib',chk:'Look for dirt or marks on the shaft.'},{t:'Catch not
+■ releasing',c:['catch','runner'],conf:'Low',why:'A stuck catch blocks the runner.',alt:'Bent ribs',chk:'Check whether the catch moves freely.'}],
+0180 stay:[{t:'Worn spring catch',c:['catch','runner'],conf:'Medium',why:'The catch holds the runner; wear lets it slip.',alt:'Runner not travelling fully',chk:'Open fully and see if the runner
+■ reaches the catch.'},{t:'Runner not reaching its stop',c:['runner','shaft'],conf:'Low',why:'Friction may stop it short.',alt:'Worn catch',chk:'Check for binding along the shaft.'}]},
+0181 FACT:[['Component accessibility',4,'Most parts are visible when open (general design).'],['Modularity',2,'Frame parts are linked together.'],['Fastener / assembly complexity',2,'Rivets and
+■ sewn joints are common.'],['Replacement parts availability',null,'Not documented here.'],['Repair documentation availability',null,'Not documented here.'],['Independent part replacement',2,'
+■ Canopy and ribs are rarely sold separately.']],
+0182 MAINT:[['Schedule','Check the mechanism a few times a year.'],['Cleaning','Brush off dirt; wipe the shaft.'],['Preventive care','Open fully to dry before closing.'],['Storage','Store dry an
+■ d loosely closed.'],['Common mistakes','Forcing it open; closing it while wet.'],['Safety','Rib tips and the mechanism can pinch. Keep fingers clear and ask an adult or specialist for anythi
+■ ng beyond cleaning.']]},
+0183 {id:'pen',n:'Ballpoint pen',c:'Everyday mechanical objects',d:'Ink refill, ball tip, return spring and click mechanism.',comps:PEN,
+0184 SYM:{skip:['Writes intermittently or skips','skip intermittent patchy faint gaps'],none:['Does not write at all','write nothing dry empty blank'],click:['Click will not hold or retract','cl
+■ ick retract hold stay out button']},
+0185 CAUSES:{skip:[{t:'Partly clogged tip',c:['tip','refill'],conf:'Medium',why:'Dried ink at the ball interrupts flow.',alt:'Air blockage',chk:'Test on scrap paper and note where it fails.'},{t
+■ :'Air or ink flow issue in the refill',c:['refill'],conf:'Low',why:'Flow can be interrupted inside the tube.',alt:'Clogged tip',chk:'Check the ink level through the barrel if visible.'}],
+0186 none:[{t:'Dried or used-up ink',c:['refill','tip'],conf:'Medium',why:'No ink reaches the ball.',alt:'Tip not extending',chk:'See whether the ink column is visible.'},{t:'Tip not extending',
+■ c:['click','spring','tip'],conf:'Low',why:'If the mechanism does not push the tip out, nothing touches paper.',alt:'Dry ink',chk:'Click and see whether the tip appears.'}],
+0187 click:[{t:'Weak or unseated spring',c:['spring','click'],conf:'Medium',why:'The spring supplies the return force.',alt:'Worn latch',chk:'Notice whether the button returns by itself.'},{t:'W
+■ orn click latch',c:['click','barrel'],conf:'Medium',why:'A worn latch cannot hold the tip out.',alt:'Weak spring',chk:'Listen for a clean click.'}]},
+0188 FACT:[['Component accessibility',3,'Parts are reached by unscrewing in many designs (general).'],['Modularity',3,'The refill is often a separate part.'],['Fastener / assembly complexity',3,
+■ 'Many pens simply screw or snap together.'],['Replacement parts availability',null,'Not documented here.'],['Repair documentation availability',null,'Not documented here.'],['Independent par
+■ t replacement',3,'Refills are commonly replaceable; mechanism parts are not.']],
+0189 MAINT:[['Schedule','No routine schedule needed.'],['Cleaning','Wipe the barrel and tip with a dry cloth.'],['Preventive care','Retract or cap when not in use.'],['Storage','Store tip down o
+■ r flat, away from heat.'],['Common mistakes','Pressing hard; leaving the tip out.'],['Safety','Small springs and parts are a choking risk for young children.']]}];
+0190
+0191 const P=(key,name,cat,g,p,e,col,desc,fn,faults,rel,rep,x={})=>({key,name,cat,g,p,e,col,desc,fn,faults,rel,rep,maint:'Keep clean and dry; avoid forcing.',rc:'Unknown',...x});
+0192 const L=(pre,a)=>a.map((c,i)=>({...c,id:pre+'-0'+(i+1)}));
+0193 const Cs=(t,c,conf,why,alt,chk)=>({t,c,conf,why,alt,chk});
+0194 const FA=(a,m,f,i)=>[['Component accessibility',a,'General design; varies by model.'],['Modularity',m,'General design; varies by model.'],['Fastener / assembly complexity',f,'General design;
+■ varies by model.'],['Replacement parts availability',null,'Not documented here.'],['Repair documentation availability',null,'Not documented here.'],['Independent part replacement',i,'Genera
+■ l design; varies by model.']];
+0195 const MT=(c,sf)=>[['Schedule','Occasional check with regular use.'],['Cleaning',c],['Preventive care','Use as intended; do not exceed its limits.'],['Storage','Store dry and out of reach of
+■ small children.'],['Common mistakes','Forcing it; using it for jobs it was not made for.'],['Safety',sf]];
+0196 const TR=g=>{g.rotateZ(-Math.PI/2);return g};
+0197 DB.push(
+0198 {id:'scissors',n:'Scissors',c:'Tools and equipment',d:'Two pivoting blades joined by a screw, with finger loops.',
+0199 comps:L('SCI',[P('bladeA','Blade A','Cutting',B(2.2,.12,.05),[1.1,.7,.03],[1.4,.5,.9],0xD7D2CA,'Upper cutting blade.','Shears against Blade B to cut.',['Dull edge','Nicks'],['bladeB','pivot
+■ '],'Often not replaceable separately.',{r:[0,0,.18]}),
+0200 P('bladeB','Blade B','Cutting',B(2.2,.12,.05),[1.1,.3,-.03],[1.4,-.5,-.9],0xBBB5AD,'Lower cutting blade.','Shears against Blade A to cut.',['Dull edge','Bent blade'],['bladeA','pivot'],'Oft
+■ en not replaceable separately.',{r:[0,0,-.18]}),
+0201 P('pivot','Pivot screw','Joint',Cy(.09,.3,true),[0,.5,0],[0,0,1.6],0x873F4B,'Screw or rivet joining the blades.','Acts as the pivot and sets blade contact.',['Too loose or too tight','Loose
+■ ning over time'],['bladeA','bladeB'],'Sometimes adjustable; availability unknown.'),
+0202 P('handleA','Handle A','Grip',new THREE.TorusGeometry(.38,.07,8,16),[-1.0,.1,.03],[-1.2,-.8,.9],0x512B34,'Finger loop for the upper blade.','Transfers hand force to the blade.',['Cracked lo
+■ op'],['bladeA'],'Usually part of the blade.'),
+0203 P('handleB','Handle B','Grip',new THREE.TorusGeometry(.38,.07,8,16),[-1.0,.9,-.03],[-1.2,.8,-.9],0x512B34,'Finger loop for the lower blade.','Transfers hand force to the blade.',['Cracked l
+■ oop'],['bladeB'],'Usually part of the blade.')]),
+0204 SYM:{dull:['Cuts poorly or chews paper','cut dull chew tear paper poor'],loose:['Blades feel loose or wobbly','loose wobble gap wiggle'],stiff:['Hard to open or close','stiff hard tight stu
+■ ck squeak']},
+0205 CAUSES:{dull:[Cs('Dull or nicked blade edge',['bladeA','bladeB'],'Medium','A damaged edge crushes instead of shearing.','Loose pivot','Look at the edges for nicks without touching them.'),C
+■ s('Blades not meeting cleanly',['pivot','bladeA','bladeB'],'Low','A loose pivot lets the blades part.','Dull edge','See whether the blades gap near the tips.')],
+0206 loose:[Cs('Pivot has loosened',['pivot'],'Medium','The pivot sets blade contact.','Worn blades','Check the pivot for play.'),Cs('Worn pivot hole',['pivot','bladeA','bladeB'],'Low','Wear let
+■ s the blades wobble.','Loosened pivot','Note whether the wobble is at the pivot.')],
+0207 stiff:[Cs('Pivot too tight or dirty',['pivot'],'Medium','Friction at the pivot raises effort.','Residue on blades','Check for residue near the pivot.'),Cs('Adhesive residue on blades',['bla
+■ deA','bladeB'],'Low','Sticky residue adds drag.','Tight pivot','Look for residue on the blade faces.')]},
+0208 FACT:FA(4,2,3,2),MAINT:MT('Wipe blades closed-side down with a dry cloth; remove residue carefully.','Blades are sharp. Close them for storage; ask an adult for any adjustment.')},
+0209 {id:'pencil',n:'Mechanical pencil',c:'Everyday mechanical objects',d:'Click button, clutch and spring advance thin graphite lead.',
+0210 comps:L('PCL',[P('barrel','Barrel','Body',Cx(.2,2.6),[0,.3,0],[0,0,1.6],0x873F4B,'Outer body (shown translucent).','Holds the mechanism and provides the grip.',['Cracking'],['lead','clutch'
+■ ],'Usually the product itself.',{o:.4}),
+0211 P('lead','Graphite lead','Writing',Cx(.03,2.4),[.1,.3,0],[0,1,0],0x30282A,'Thin graphite rod.','The writing material advanced as it wears.',['Breaking','Jamming'],['clutch','tip'],'Consumab
+■ le; replaceable.'),
+0212 P('clutch','Clutch','Mechanism',Cx(.1,.35),[.9,.3,0],[0,-1,0],0xD7D2CA,'Small gripping part holding the lead.','Grips the lead and releases it when the button is pressed.',['Not gripping','
+■ Not releasing'],['lead','spring'],'Unknown; usually not repaired.'),
+0213 P('spring','Return spring','Mechanism',helix(.9,.1,7,-.45),[.3,.3,0],[0,-1.8,0],0xD8BDB4,'Coil spring behind the clutch.','Returns the clutch after each click.',['Weak or unseated'],['clutc
+■ h'],'Small part; availability unknown.'),
+0214 P('tip','Tip','Writing',TR(new THREE.ConeGeometry(.15,.5,12)),[1.55,.3,0],[1.4,0,0],0xBBB5AD,'Metal cone guiding the lead.','Supports the lead while writing.',['Bent or clogged'],['lead'],'
+■ Often part of the front assembly.'),
+0215 P('eraser','Eraser','Accessory',Cx(.14,.4),[-1.5,.3,0],[-1.4,0,0],0xE5DED4,'Small eraser under a cap.','Removes pencil marks.',['Hardened or used up'],['barrel'],'Often replaceable.')]),
+0216 SYM:{feed:['Lead will not advance','lead advance click feed push nothing'],break:['Lead keeps breaking','break snap crack breaks'],slide:['Lead slides back in while writing','slide back ret
+■ ract sinks pushes']},
+0217 CAUSES:{feed:[Cs('Clutch not gripping or releasing',['clutch','lead'],'Medium','The clutch controls lead advance.','No lead left','Click several times and see if any lead appears.'),Cs('Fra
+■ gment stuck in the tip',['tip','lead'],'Low','A broken piece can block the tip.','Clutch issue','Look at the tip for a stuck fragment.')],
+0218 break:[Cs('Lead too thin for the pressure',['lead'],'Medium','Thin lead breaks under firm pressure.','Too much lead extended','Try lighter pressure and less extended lead.'),Cs('Damaged tip
+■ ',['tip'],'Low','A rough tip can chip the lead.','Lead quality','Inspect the tip for damage.')],
+0219 slide:[Cs('Worn clutch grip',['clutch','spring'],'Medium','The clutch must hold the lead against writing force.','Wrong lead size','Check that the lead size matches the marking.'),Cs('Lead
+■ size mismatch',['lead','clutch'],'Medium','Too-thin lead may not be held.','Worn clutch','Compare lead size to the barrel marking.')]},
+0220 FACT:FA(3,3,3,3),MAINT:MT('Wipe the barrel; keep the tip clear.','Tips are sharp and parts are small; keep away from young children.')},
+0221 {id:'clothespin',n:'Clothespin',c:'Everyday mechanical objects',d:'Two arms and a spring that clamps cloth.',
+0222 comps:L('CLP',[P('armA','Arm A','Clamping',B(.28,2.2,.35),[-.17,.5,0],[-1.2,0,0],0xBBB5AD,'One arm forming a jaw.','Forms one jaw and the lever.',['Warping','Cracking'],['armB','spring'],'U
+■ sually not replaced separately.',{r:[0,0,.06]}),
+0223 P('armB','Arm B','Clamping',B(.28,2.2,.35),[.17,.5,0],[1.2,0,0],0xBBB5AD,'The second arm.','Forms the opposite jaw.',['Warping','Cracking'],['armA','spring'],'Usually not replaced separatel
+■ y.',{r:[0,0,-.06]}),
+0224 P('spring','Torsion spring','Mechanism',(g=>{g.rotateY(Math.PI/2);return g})(helix(.5,.15,4,-.25)),[0,.8,0],[0,1.4,0],0xD8BDB4,'Coil spring between the arms.','Pushes the jaws together.',['
+■ Lost tension','Dislodged'],['armA','armB'],'Small part; availability unknown.')]),
+0225 SYM:{weak:['Grip is weak','weak grip loose hold slips fall'],spread:['Arms will not close','close open stuck spread'],crack:['Arm cracked or split','crack split break snap']},
+0226 CAUSES:{weak:[Cs('Spring has lost tension',['spring'],'Medium','The spring provides the clamping force.','Worn jaws','Check the spring is seated.'),Cs('Arms warped or worn',['armA','armB'],
+■ 'Low','Warping stops the jaws meeting.','Weak spring','See if the jaws meet along their length.')],
+0227 spread:[Cs('Spring dislodged',['spring','armA','armB'],'Medium','A displaced spring cannot close the arms.','Warped arms','Check the spring position.'),Cs('Debris between the arms',['armA',
+■ 'armB'],'Low','Debris blocks closing.','Dislodged spring','Look between the jaws.')],
+0228 crack:[Cs('Old or weathered arm',['armA','armB'],'Medium','Material becomes brittle with sun and age.','Overloading','Look for cracks near the pivot.')]},
+0229 FACT:FA(4,2,2,1),MAINT:MT('Wipe dry; keep out of prolonged sun when possible.','Pinch hazard; the spring is small, so keep away from young children.')},
+0230 {id:'binderclip',n:'Binder clip',c:'Everyday mechanical objects',d:'Spring-steel body with two wire handles.',
+0231 comps:L('BCL',[P('body','Clip body','Clamping',B(2,1.1,.5),[0,.6,0],[0,0,0],0x30282A,'Folded spring-steel jaw.','Squeezes the paper stack.',['Lost tension','Over-opened'],['handleL','handle
+■ R'],'Not replaceable separately.'),
+0232 P('handleL','Left wire handle','Lever',new THREE.TorusGeometry(.55,.03,6,20,Math.PI),[-1.0,1.15,0],[-1.6,.6,0],0xBBB5AD,'Wire arm pivoting on the body.','Opens the jaws when squeezed.',['Be
+■ nt','Slipped out'],['body','handleR'],'Sometimes re-seatable by hand; unknown.',{r:[0,0,-.4]}),
+0233 P('handleR','Right wire handle','Lever',new THREE.TorusGeometry(.55,.03,6,20,Math.PI),[1.0,1.15,0],[1.6,.6,0],0xBBB5AD,'Wire arm pivoting on the body.','Opens the jaws when squeezed.',['Ben
+■ t','Slipped out'],['body','handleL'],'Sometimes re-seatable by hand; unknown.',{r:[0,0,.4]})]),
+0234 SYM:{weak:['Clip is not gripping paper','grip weak paper slips hold loose'],pop:['Handle slipped out','handle pop out slipped falls lose'],bent:['Clip is bent or will not close','bent close
+■ twisted stuck']},
+0235 CAUSES:{weak:[Cs('Body has lost spring tension',['body'],'Medium','The steel body provides the squeeze.','Too much paper','Compare with a thinner stack.'),Cs('Paper stack too thick',['body'
+■ ],'Medium','Beyond capacity the grip drops.','Fatigued body','Try fewer sheets.')],
+0236 pop:[Cs('Handle ends out of the body holes',['handleL','handleR','body'],'Medium','The handle ends pivot in small holes and can slip out.','Bent handle','Look at how the handle ends seat.')
+■ ],
+0237 bent:[Cs('Over-opened or bent body',['body'],'Medium','Forcing the clip beyond range deforms the metal.','Bent handles','Check for visible twisting.'),Cs('Bent wire handle',['handleL','hand
+■ leR'],'Low','A bent handle may block folding.','Bent body','Compare the two handles.')]},
+0238 FACT:FA(5,3,4,2),MAINT:MT('Wipe with a dry cloth.','Pinch hazard; wire ends can scratch.')},
+0239 {id:'tape',n:'Tape measure',c:'Tools and equipment',d:'Spring-loaded steel tape in a case with a lock.',
+0240 comps:L('TPM',[P('case','Case','Body',Cy(1,.7,true),[0,.7,0],[0,0,1.6],0x873F4B,'Outer housing (shown translucent).','Holds the reel and guides the tape.',['Cracked case','Damaged mouth'],[
+■ 'reel','tape'],'Usually the product itself.',{o:.35}),
+0241 P('reel','Reel and spring','Mechanism',Cy(.6,.5,true),[0,.7,0],[0,1.5,0],0xD8BDB4,'Spool with an internal return spring.','Stores the tape and pulls it back.',['Weak return','Binding'],['ta
+■ pe','case'],'Unknown; usually not user-serviceable.'),
+0242 P('tape','Tape blade','Measuring',B(2.6,.05,.45),[2.3,.25,0],[0,-.6,0],0xD7D2CA,'Printed steel strip.','Provides the measurement scale.',['Kinks','Worn markings'],['reel','hook'],'Not separ
+■ ately replaceable.'),
+0243 P('hook','End hook','Measuring',B(.06,.4,.45),[3.62,.4,0],[.8,.3,0],0xBBB5AD,'Hook at the end of the tape.','Catches the edge of the object.',['Loose or bent'],['tape'],'Part of the tape en
+■ d.'),
+0244 P('lockbtn','Lock button','Control',B(.35,.14,.3),[0,1.6,0],[0,1.3,0],0x873F4B,'Button on top of the case.','Presses to hold the tape.',['Worn or dirty'],['tape'],'Usually not replaceable s
+■ eparately.')]),
+0245 SYM:{retract:['Tape will not retract','retract return slow back stuck rewind'],lock:['Tape will not lock','lock hold button slides out'],kink:['Tape is kinked or bent','kink bent crease fol
+■ d'],hookp:['Hook is loose or inaccurate','hook loose wobble inaccurate measure']},
+0246 CAUSES:{retract:[Cs('Return spring tension issue',['reel'],'Medium','The spring in the reel pulls the tape back.','Tape rubbing at the case mouth','Pull out slowly and note where it catches
+■ .'),Cs('Tape creased at the case mouth',['tape','case'],'Medium','A crease can snag at the exit.','Spring issue','Look for creases near the exit.')],
+0247 lock:[Cs('Lock button worn or dirty',['lockbtn','tape'],'Medium','The lock presses on the tape.','Worn tape surface','Press it and see whether it grips.')],
+0248 kink:[Cs('Tape bent while over-extended',['tape','case'],'Medium','Sharp bends crease thin steel.','Damaged case mouth','Inspect where the crease is.')],
+0249 hookp:[Cs('Hook rivets loosened',['hook','tape'],'Medium','The hook is meant to slide slightly; loose rivets add excess play.','Bent hook','Check how much the hook moves.')]},
+0250 FACT:FA(2,2,3,1),MAINT:MT('Wipe the tape and keep dust out of the case mouth.','Tape edges are sharp and it can snap back. Guide it back; ask an adult before opening the case.')}
+0251 );
+0252
+0253 const E='Mains-powered item: unplug first and ask a qualified technician; never open it.';
+0254 const OFF=[
+0255 ['chair','Office chair','Office equipment','Height-adjustable seat on a gas lift with caster wheels.',[['Seat','Supports the sitter.','Compressed or torn foam'],['Gas lift','Pressurised cyli
+■ nder that sets seat height.','Slowly sinking'],['Tilt mechanism','Lets the seat tilt and locks the angle.','Loose or stuck tilt'],['Caster wheels','Let the chair roll and swivel.','Jammed or
+■ worn wheels']],[['Seat slowly sinks','sink sinks drops lower slowly height','Gas lift losing pressure',[1],'The cylinder holds seat height; internal wear can let it drop.','Note whether it
+■ sinks under weight. Do not open the cylinder.'],['Chair wobbles or tilts oddly','wobble tilt loose shake rock','Loose tilt mechanism or fixings',[2,1],'A loose tilt plate lets the seat move
+■ against the base.','Look for visible gaps between seat and base.']],'Gas lift cylinders are pressurised. Never open them; ask for help.'],
+0256 ['lamp','Desk lamp','Office equipment','Weighted base, jointed arm, lamp head and switch.',[['Base','Keeps the lamp stable.','Cracked or light base'],['Arm','Positions the lamp head.','Droop
+■ s'],['Lamp head','Holds the bulb or LED and directs light.','Loose bulb seat'],['Switch','Turns the lamp on and off.','Worn contacts']],[['Light flickers or cuts out','flicker cut out dim bl
+■ ink','Loose bulb or worn switch',[2,3],'A poor bulb seat or switch contact can interrupt power.','Unplug first; check the bulb type and seating.'],['Arm droops','droop sag fall lower','Joint
+■ tension lost',[1],'Arm joints rely on friction or springs.','See whether the arm holds position when unplugged and cool.']],E],
+0257 ['mouse','Computer mouse','Electronics','Shell, click switches, scroll wheel and optical sensor.',[['Shell','Houses and shapes the mouse.','Worn coating'],['Click switches','Register button
+■ presses.','Double-clicking'],['Scroll wheel','Scrolls pages and middle-clicks.','Skipping'],['Sensor','Tracks movement across a surface.','Dirty lens']],[['Double-clicks by itself','double c
+■ lick twice repeats','Worn click switch',[1],'Switch contacts wear with use.','Test on another computer to rule out software.'],['Cursor jumps or lags','jump lag skip erratic drift','Dirty se
+■ nsor or poor surface',[3],'Optical sensors need a clean lens and suitable surface.','Try another surface and check the sensor lens for dust.']]],
+0258 ['keyboard','Keyboard','Electronics','Keycaps over switches or a membrane, on a plate with a USB cable.',[['Keycaps','Give each key its surface.','Worn legends'],['Switch layer','Registers e
+■ ach keypress.','Dead or sticky keys'],['Plate','Holds the switches in place.','Bent plate'],['USB cable','Connects to the computer.','Frayed near ends']],[['A key does not register','key reg
+■ ister press dead missing','Worn or dirty switch contact',[1,0],'Contacts under the key may be dirty or worn.','Test the key in another program or computer.'],['A key feels sticky','sticky st
+■ uck slow spill','Debris under the keycap',[0,1],'Residue slows the key return.','Look for visible debris. Do not pour liquids.']]],
+0259 ['holepunch','Hole punch','Office equipment','Lever with spring, punch pins and a chip tray.',[['Handle','Applies hand force.','Does not return'],['Return spring','Lifts the handle back up.'
+■ ,'Weak or stuck'],['Punch pins','Cut the holes.','Dull edges'],['Chip tray','Collects paper discs.','Overfull jam']],[['Holes are ragged','ragged tear rough cut dull','Dull punch edges',[2],
+■ 'Dull edges tear instead of cut.','Test with fewer sheets.'],['Handle does not return','return stuck handle spring up','Spring issue or jam',[1,0],'The spring lifts the handle.','Look for a
+■ jammed paper scrap.']],'Keep fingers clear of the punch area.'],
+0260 ['tapedisp','Tape dispenser','Office equipment','Roll core, cutting blade, weighted base and tape guide.',[['Roll core','Holds the tape roll.','Too tight or loose'],['Cutting blade','Starts
+■ the tear.','Dull teeth'],['Weighted base','Keeps it still.','Cracked base'],['Tape guide','Directs the tape.','Sticky buildup']],[['Tape will not tear cleanly','tear cut blade dull','Dull cu
+■ tting edge',[1],'A worn edge fails to start the tear.','Compare with a fresh roll of the same width.'],['Roll spins too freely or too tight','spin free tight loose drag','Core tension',[0],'
+■ Core friction sets resistance.','Check the roll fits the core size.']],'Cutting teeth are sharp.'],
+0261 ['marker','Whiteboard marker','Office equipment','Felt nib, ink reservoir, cap and barrel.',[['Nib','Applies ink.','Frayed or squashed'],['Ink reservoir','Stores ink.','Dried out'],['Cap','S
+■ eals the nib.','Loose seal'],['Barrel','Holds the parts.','Cracked']],[['Marker is dry or faint','dry faint streak dried','Dried ink or poor cap seal',[1,2],'An open or loose cap dries the i
+■ nk.','Check the cap clicks fully closed.'],['Nib is frayed','frayed worn nib squashed','Worn nib',[0],'Pressure wears the nib.','Compare strokes on scrap paper.']]],
+0262 ['calculator','Calculator','Electronics','Keypad, display, circuit board and battery or solar cell.',[['Keypad','Takes input.','Unresponsive keys'],['Display','Shows results.','Faint or blan
+■ k'],['Circuit board','Computes results.','Not user-serviceable'],['Battery or solar cell','Supplies power.','Low power']],[['Display faint or blank','display faint blank dim dark','Low power
+■ ',[3,1],'Low power dims the display.','Check lighting or battery type on the label.'],['Keys unresponsive','key press unresponsive dead','Worn contacts',[0,2],'Contact pads wear.','Test each
+■ key and note which fail.']]],
+0263 ['fan','Desk fan','Household appliances','Blades, motor, safety guard and base.',[['Blades','Move the air.','Loose or dusty'],['Motor','Spins the blades.','Slow or noisy'],['Safety guard','K
+■ eeps fingers out.','Bent wires'],['Base','Stabilises the fan.','Wobble']],[['Fan is noisy','noise noisy rattle buzz loud','Loose blades or dust',[0,2],'Imbalance or contact causes rattle.','
+■ Unplug and look for visible dust or loose parts.'],['Spins slowly','slow weak speed spin','Motor or speed control',[1],'Wear can reduce speed.','Check whether speed settings change anything.
+■ ']],E],
+0264 ['printer','Printer','Electronics','Paper tray, pick-up roller, cartridge and paper path.',[['Paper tray','Holds paper.','Misaligned guides'],['Pick-up roller','Grips and feeds paper.','Worn
+■ rubber'],['Ink or toner cartridge','Supplies print material.','Low or clogged'],['Paper path','Guides paper through.','Debris']],[['Paper jams','jam paper stuck crumple','Worn pick-up rolle
+■ r or path debris',[1,3],'Rollers grip and guide paper.','Clear paper only as the manufacturer instructs.'],['Streaks on prints','streak lines faint smear','Low or clogged cartridge',[2],'Sup
+■ ply problems cause streaks.','Run the cleaning cycle if available.']],'Hot parts and mains power: follow the manual; ask for help beyond clearing paper.'],
+0265 ['headphones','Headphones','Electronics','Ear cups, drivers, headband and cable.',[['Ear cups','Seal around the ear.','Worn pads'],['Drivers','Produce sound.','One side silent'],['Headband',
+■ 'Holds the cups.','Cracks'],['Cable','Carries the signal.','Broken conductor']],[['Sound only in one ear','one ear side no sound left right','Cable or connector fault',[3,1],'A broken conduc
+■ tor can silence one side.','Test with another device.'],['Headband cracked','crack band break loose','Material fatigue',[2],'Stress builds at the joints.','Look for cracks near the joints.']
+■ ]],
+0266 ['powerstrip','Power strip','Electronics','Switch, outlets, surge protection and cord.',[['Power switch','Turns outlets on or off.','Worn'],['Outlets','Receive plugs.','Loose grip'],['Surge
+■ protector','Limits voltage spikes.','Tripped'],['Cord','Connects to the wall.','Damaged insulation']],[['No power at outlets','no power dead off outlets','Switch off or protector tripped',[0
+■ ,2],'The switch or protector may be off.','Check any reset button and try another outlet.'],['Strip feels warm','warm hot overload burn smell','Overload or damage',[1,3],'Heat can indicate o
+■ verload.','Unplug it and stop using it if hot or it smells.']],'Stop using damaged or hot strips. Do not open them.'],
+0267 ['laptop','Laptop','Electronics','Screen, keyboard, battery and hinge.',[['Screen','Displays output.','Flicker'],['Keyboard','Takes input.','Dead keys'],['Battery','Powers it.','Short runtim
+■ e'],['Hinge','Lets the lid open.','Loose']],[['Gets very hot','hot heat fan overheat','Blocked airflow',[2],'Dust or blocked vents raise temperature.','Use on a hard surface and check vents.
+■ '],['Screen will not stay open','hinge loose screen falls open','Worn hinge',[3,0],'Hinge friction lessens with wear.','Open slowly and note stiffness.']],'A swollen or hot battery is a haza
+■ rd: stop using it and see a technician.'],
+0268 ['cable','Charging cable','Electronics','Connector, strain relief, cable and plug.',[['Connector','Mates with the port.','Worn contacts'],['Strain relief','Protects the joint.','Cracked'],['
+■ Cable','Carries power and data.','Frayed'],['Plug','Connects to the charger.','Loose']],[['Charges intermittently','charge intermittent loose cut','Worn connector or cable',[0,2],'Contacts w
+■ ear and wires fray near the ends.','Try another cable and charger.'],['Connector feels loose','loose wiggle fit','Debris or wear',[0,1],'Lint or wear loosens the fit.','Look for lint in the
+■ port.']]],
+0269 ['bottle','Water bottle','Personal accessories','Lid, seal gasket, body and threads.',[['Lid','Closes the bottle.','Cracked'],['Seal gasket','Prevents leaks.','Worn or misseated'],['Body','H
+■ olds the liquid.','Dented'],['Threads','Secure the lid.','Cross-threaded']],[['Bottle leaks','leak drip seep','Worn gasket or misthreaded lid',[1,3],'The gasket seals the lid.','Check the ga
+■ sket is seated and the lid threads straight.'],['Smells or stains','smell stain odour','Residue in the gasket groove',[1],'Residue builds in seals.','Check the seal grooves for residue.']]],
+0270 ['shredder','Paper shredder','Office equipment','Cutting blades, motor, waste bin and paper sensor.',[['Cutting blades','Cut paper into strips.','Blunt or jammed'],['Motor','Drives the cutte
+■ rs.','Stalls'],['Waste bin','Collects shreds.','Full'],['Paper sensor','Starts the motor.','Dusty']],[['Shredder jams','jam stuck clog','Overloaded sheets or blunt blades',[0],'Too many shee
+■ ts stall the cutters.','Count sheets against the stated capacity.'],['Does not start on paper','start sensor not detect','Paper sensor blocked',[3],'The sensor starts the motor.','Check for
+■ dust near the paper slot.']],'Blades are dangerous. Unplug before clearing and ask an adult. Never open the head.'],
+0271 ['coffee','Coffee maker','Household appliances','Reservoir, heating element, filter basket and carafe.',[['Water reservoir','Holds water.','Scale'],['Heating element','Heats the water.','Slo
+■ w heating'],['Filter basket','Holds the grounds.','Clogged'],['Carafe','Collects coffee.','Chipped']],[['Brews slowly','slow brew drip clog','Scale buildup',[1,0],'Mineral scale restricts fl
+■ ow.','Check the maker descaling guidance.'],['Basket overflows','overflow spill basket','Wrong filter or clog',[2],'Blocked filters back up.','Check the filter size.']],E],
+0272 ['padlock','Padlock','Everyday mechanical objects','Shackle, lock body, tumbler mechanism and key.',[['Shackle','Secures the lock.','Stuck'],['Lock body','Houses the mechanism.','Corroded'],
+■ ['Tumbler mechanism','Reads the key.','Worn'],['Key','Operates the lock.','Bent or worn']],[['Key is hard to turn','key stiff hard turn stuck','Dirt or worn key',[3,2],'Pins need clean, true
+■ key cuts.','Try a spare key and check for a bent key.'],['Shackle will not release','shackle stuck release','Mechanism wear',[0,2],'The latch may bind.','Check the key is fully inserted.']]
+■ ],
+0273 ['drawer','Drawer slide','Office equipment','Drawer, slide rails, ball bearings and cabinet.',[['Drawer','Holds items.','Overloaded'],['Slide rails','Guide movement.','Bent'],['Ball bearings
+■ ','Reduce friction.','Dirty'],['Cabinet','Holds the rails.','Loose fixings']],[['Drawer sticks','stick stuck hard jam','Debris or misalignment',[1,2],'Bearings roll in the rail.','Empty the
+■ drawer and look for debris.'],['Drawer sags','sag tilt low','Worn rails or loose fixings',[1,3],'Loose fixings let the drawer tilt.','Check the rail fixings are tight.']]],
+0274 ['clipboard','Clipboard','Office equipment','Board, spring clip, rivet and hanging hole.',[['Board','Supports paper.','Warped'],['Spring clip','Holds paper.','Weak'],['Rivet','Fixes the clip
+■ .','Loose'],['Hanging hole','Allows hanging.','Torn']],[['Clip does not hold paper','weak grip slip clip paper','Weak clip spring',[1],'The spring provides the grip.','Test with fewer sheets
+■ .'],['Clip wobbles','wobble loose clip','Loose rivet',[2],'The rivet holds the clip.','Check for play at the rivet.']],'Pinch hazard.'],
+0275 ['sharpener','Pencil sharpener','Office equipment','Blade, housing, shaving bin and blade screw.',[['Blade','Shaves the pencil.','Dull'],['Housing','Holds the pencil.','Cracked'],['Shaving b
+■ in','Collects shavings.','Full'],['Blade screw','Fixes the blade.','Loose']],[['Does not sharpen well','dull sharpen blunt chew','Dull blade',[0],'A blunt blade chews wood.','Check the blade
+■ edge visually.'],['Lead keeps breaking','break snap lead tip','Misaligned blade or poor pencil',[0,3],'Misalignment breaks lead.','Try another pencil.']],'The blade is sharp. Do not touch i
+■ t.'],
+0276 ['remote','Remote control','Electronics','Buttons, rubber contact pad, circuit board and batteries.',[['Buttons','Take input.','Worn'],['Contact pad','Closes the circuit.','Worn contacts'],[
+■ 'Circuit board','Sends signals.','Not user-serviceable'],['Batteries','Supply power.','Weak']],[['Some buttons do not respond','button respond dead press','Worn contacts',[1,0],'Pad contacts
+■ wear.','Replace batteries first, then test each button.'],['Short range','range short weak distance','Weak batteries',[3],'Low power reduces range.','Try fresh batteries.']],'Keep batteries
+■ away from young children.'],
+0277 ['clock','Wall clock','Household appliances','Movement, hands, face and battery.',[['Clock movement','Drives the hands.','Slow'],['Hands','Show the time.','Bent'],['Clock face','Marks the ho
+■ urs.','Warped'],['Battery','Supplies power.','Weak']],[['Runs slow or stops','slow stop battery time late','Low battery or catching hands',[3,1],'Power or hand contact affects timing.','Try
+■ a fresh battery and check hand clearance.'],['Hands touch each other','touch stuck catch hands','Bent hands',[1,2],'Hands may rub.','Look at the spacing between the hands.']]],
+0278 ['monitor','Computer monitor','Electronics','Display panel, stand, power board and cables.',[['Display panel','Shows the picture.','Dead pixels'],['Stand','Holds it up.','Loose'],['Power boa
+■ rd','Supplies power.','Not user-serviceable'],['Cables','Carry signal and power.','Loose']],[['Screen flickers','flicker flash blink','Loose cable or power issue',[3,2],'Connection or power
+■ fluctuations can cause flicker.','Reseat cables and try another cable.'],['No picture','no picture blank black signal','Input or cable problem',[3,0],'The signal path may be broken.','Check
+■ the input source and cable.']],E]];
+0279
+0280 const GS=sp=>{const gs=sp.split(';').map(it=>{const[a0,pp,rr]=it.trim().split('@');const a=a0.split(' '),n=a.slice(1).map(Number);let g;
+0281 switch(a[0]){case'b':g=B(...n);break;case'c':g=Cy(n[0],n[1]);break;case'cx':g=Cx(n[0],n[1]);break;case'cz':g=Cy(n[0],n[1],true);break;case't':g=new THREE.TorusGeometry(n[0],n[1],8,24);break
+■ ;case'ta':g=new THREE.TorusGeometry(n[0],n[1],8,24,Math.PI);break;case'k':g=new THREE.ConeGeometry(n[0],n[1],16);break;case's':g=new THREE.SphereGeometry(n[0],14,10);break;case'h':g=helix(n[
+■ 0],n[1],n[2],-n[0]/2);break}
+0282 if(rr){const r=rr.split(',').map(Number);g.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(r[0],r[1],r[2])))}
+0283 if(pp){const q=pp.split(',').map(Number);g.translate(q[0],q[1],q[2])}return g.toNonIndexed()});
+0284 const Pp=[],Nn=[];gs.forEach(g=>{for(const v of g.attributes.position.array)Pp.push(v);for(const v of g.attributes.normal.array)Nn.push(v)});
+0285 const m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.Float32BufferAttribute(Pp,3));m.setAttribute('normal',new THREE.Float32BufferAttribute(Nn,3));return m};
+0286 const GR=(sp,nx,nz,x0,dx,z0,dz,y)=>{const a=[];for(let i=0;i<nx;i++)for(let j=0;j<nz;j++)a.push(`${sp}@${(x0+i*dx).toFixed(2)},${y},${(z0+j*dz).toFixed(2)}`);return a.join(';')};
+0287 const CU={
+0288 chair:[['b 2.2 .3 2@0,1.5,0;b 2 1.2 .2@0,2.35,-.95',[0,1.6,0]],['c .12 1@0,.8,0',[0,0,2]],['b .9 .15 .7@0,1.27,0',[0,.8,0]],['b 2 .08 .16@0,.3,0;b 2 .08 .16@0,.3,0@0,1.57,0;s .13@1,.15,0;s .
+■ 13@-1,.15,0;s .13@0,.15,1;s .13@0,.15,-1',[0,-1.2,0]]],
+0289 lamp:[['c .8 .15@-1.2,.07,0',[0,-1,0]],['b .12 2.2 .12@-.58,1.01,0@0,0,-.6',[0,0,1.8]],['k .6 .8@.1,1.85,0@0,0,3.14',[1,.9,0]],['b .25 .12 .2@-.9,.15,.1',[0,1.5,1]]],
+0290 mouse:[['b 1.6 .5 2.4@0,.35,0',[0,2,0],.45],['b .6 .1 .9@-.4,.55,-.5;b .6 .1 .9@.4,.55,-.5',[0,1.4,-.8]],['cx .15 .22@0,.62,-.55',[0,2.2,-.8]],['c .18 .1@0,.12,.4',[0,-1.2,0]]],
+0291 keyboard:[[GR('b .28 .14 .28',10,4,-1.5,.33,-.5,.33,.62),[0,1.8,0]],['b 3.4 .1 1.3@0,.42,0',[0,.9,0]],['b 3.6 .1 1.5@0,.28,0',[0,-.4,0]],['cx .06 1.6@2.6,.3,-.4;b .35 .15 .25@3.5,.3,-.4',[1.
+■ 2,0,0]]],
+0292 holepunch:[['b 3 .15 .8@0,1.05,0@.12,0,0;b .3 .15 .3@-1.5,.9,0',[0,1.5,0]],['h .6 .14 5@1.4,.7,.3@0,0,1.57',[1.6,.5,0]],['c .08 .5@-.8,.55,.1;c .08 .5@0,.55,.1;c .08 .5@.8,.55,.1',[0,.4,1.4]
+■ ],['b 3 .35 1@0,.2,0',[0,-1,0]]],
+0293 tapedisp:[['cz .8 .5@0,1.1,0;cz .35 .52@0,1.1,0',[0,1.5,0]],['b .7 .06 .5@1.5,.65,0@0,0,-.3',[1.5,.5,0]],['b 2.8 .4 1.3@0,.2,0',[0,-1,0]],['b .25 .5 .5@1.0,.65,0',[0,.9,1.4]]],
+0294 marker:[['cx .1 .5@1.6,.3,0;k .12 .25@1.95,.3,0@0,0,-1.57',[1.5,0,0]],['cx .12 2.2@-.1,.3,0',[0,1.3,0]],['cx .3 1@-1.9,.3,0',[-1.6,0,0],.5],['cx .25 2.6@0,.3,0',[0,0,1.4],.4]],
+0295 calculator:[[GR('b .3 .1 .25',4,4,-.66,.44,-.35,.4,.35),[0,1.8,.2]],['b 1.7 .1 .6@0,.35,-1.0',[0,1.6,-.8]],['b 1.9 .06 2.7@0,.18,-.1',[0,.6,0]],['c .22 .08@0,.08,-.9',[0,-1.2,0]]],
+0296 fan:[['b 2.2 .3 .05@0,1.6,.4@0,0,.8;b 2.2 .3 .05@0,1.6,.4@0,0,-.8;cz .15 .2@0,1.6,.4',[0,0,1.2]],['cz .38 .7@0,1.6,-.15',[0,0,-1.5]],['t 1.2 .04@0,1.6,.75;t .9 .03@0,1.6,.75;t .6 .03@0,1.6,.
+■ 75',[0,0,2.2]],['k .7 1.3@0,.65,0;c .9 .1@0,.05,0',[0,-1,0]]],
+0297 printer:[['b 2.6 .12 1.6@0,.15,.3',[0,-.9,1.2]],['cx .2 1.8@0,.8,-.6',[0,1.4,-1.2]],['b 1.4 .5 .9@0,1.2,.1',[0,2,0]],['b 2.4 .06 1.5@0,.6,0@.45,0,0',[0,.6,1.4]]],
+0298 headphones:[['cx .5 .4@-1.45,.4,0;cx .5 .4@1.45,.4,0',[0,0,1.8]],['cx .3 .15@-1.28,.4,0;cx .3 .15@1.28,.4,0',[0,-.9,0]],['ta 1.45 .07@0,.4,0',[0,1.2,0]],['cx .03 1.7@-2.5,.4,0',[-1.2,0,0]]],
+0299 powerstrip:[['b .4 .12 .3@-1.6,.4,0',[0,1.5,0]],['b .5 .08 .5@-.7,.34,0;b .5 .08 .5@0,.34,0;b .5 .08 .5@.7,.34,0',[0,1,1.4]],['b 3.8 .3 .9@0,.2,0',[0,0,-1.8],.45],['cx .05 1.8@2.8,.2,0',[1.2
+■ ,0,0]]],
+0300 laptop:[['b 3 1.9 .1@0,1.3,-.9@-.25,0,0',[0,1.2,-1]],['b 3.2 .12 2@0,.25,.1;b 2.8 .06 1@0,.33,.35',[0,1,.6]],['b 2 .1 1@0,.1,.3',[0,-1.3,0]],['cx .1 3@0,.3,-.85',[0,-.4,-1.2]]],
+0301 cable:[['b .4 .12 .8@-2.9,.25,0;b .5 .22 .6@-2.4,.25,0',[-1.3,0,0]],['k .17 .5@-1.9,.25,0@0,0,-1.57',[0,1,0]],['cx .05 .6@-1.3,.25,0;ta 1 .05@0,.25,0;cx .05 .6@1.3,.25,0',[0,1.2,0]],['b .8 .
+■ 35 .5@2.1,.25,0;b .3 .05 .1@2.7,.35,.1;b .3 .05 .1@2.7,.35,-.1',[1.4,0,0]]],
+0302 bottle:[['c .42 .3@0,3.0,0',[0,1.8,0]],['t .32 .05@0,2.85,0@1.57,0,0',[1.6,1.2,0]],['c .65 2.2@0,1.3,0;c .34 .4@0,2.6,0',[0,-.3,0],.45],['t .34 .03@0,2.5,0@1.57,0,0;t .34 .03@0,2.6,0@1.57,0,
+■ 0;t .34 .03@0,2.7,0@1.57,0,0',[-1.6,.8,0]]],
+0303 shredder:[['cx .25 1.6@0,1.6,-.3;cx .25 1.6@0,1.6,.1',[0,1.5,0]],['cx .4 .8@1.4,1.5,-.1',[1.6,.6,0]],['b 2.2 1.3 1.2@0,.65,0',[0,-1.2,0],.35],['b .2 .1 .2@-.9,1.9,0',[-.5,1.3,0]]],
+0304 coffee:[['b .8 1.8 .9@-1.1,1.05,0',[-1.5,.5,0],.45],['b 3 .15 1.4@0,.07,0;c .7 .06@.6,.2,0',[0,-1,0]],['k .5 .5@.6,1.7,0@0,0,3.14',[0,1.5,0]],['c .5 1@.6,.75,0;t .3 .04@1.15,.75,0',[1.6,.5,0
+■ ],.4]],
+0305 padlock:[['ta .6 .08@0,1.8,0;c .08 .5@-.6,1.55,0;c .08 .5@.6,1.55,0',[0,1.5,0]],['b 1.8 1.2 .6@0,.7,0',[0,-.8,0],.4],['cz .22 .5@0,.65,0;c .05 .35@-.2,.9,0;c .05 .35@.2,.9,0',[0,0,-1.6]],['c
+■ z .08 1.2@0,.65,1.2;t .3 .07@0,.65,1.9',[0,0,2.2]]],
+0306 drawer:[['b 2.5 .7 1.8@0,.6,0;b 2.7 .8 .1@0,.65,.95',[0,0,1.8],.5],['b .06 .2 1.9@-1.4,.8,0;b .06 .2 1.9@1.4,.8,0',[0,0,1.6]],[GR('s .06',1,3,-1.45,0,-.5,.5,.8)+';'+GR('s .06',1,3,1.45,0,-.5
+■ ,.5,.8),[0,2,0]],['b .12 1.5 2@-1.6,.8,0;b .12 1.5 2@1.6,.8,0;b 3.3 .12 2@0,.05,0',[0,-1.2,0]]],
+0307 clipboard:[['b 2 2.4 .1@0,1.3,0',[0,0,-.8]],['b 1.1 .35 .2@0,2.45,.12;b .9 .06 .1@0,2.2,.17',[0,.8,1.6]],['cz .07 .3@-.45,2.45,.1;cz .07 .3@.45,2.45,.1',[0,1.6,1.2]],['t .15 .03@0,.35,.08',[
+■ 0,-1,1]]],
+0308 sharpener:[['b .5 .04 .8@0,1.0,.1@0,0,.5',[0,1.8,0]],['b 1.4 .9 1.2@0,1.0,0',[0,.5,-1.2],.45],['b 1.2 .4 1@0,.3,0',[0,-1,0]],['cz .06 .3@.4,1.0,.45',[1,.6,1.5]]],
+0309 remote:[[GR('c .1 .1',3,4,-.35,.35,-1.0,.6,.5),[0,1.8,0]],['b 1.1 .06 3@0,.35,0',[0,.9,0]],['b 1.2 .05 3.2@0,.25,0',[0,.2,0]],['cz .13 .9@-.2,.1,1.0;cz .13 .9@.2,.1,1.0',[0,-1.3,0]]],
+0310 clock:[['b .7 .7 .3@0,1.6,-.25',[0,1.4,-1.2]],['b .08 .7 .03@0,1.95,.12;b .08 .5 .03@.25,1.6,.12@0,0,1.57',[0,0,1.6]],['cz 1.4 .08@0,1.6,0',[0,0,.4],.8],['cz .13 .5@.15,1.6,-.7',[0,-1.6,-.6]
+■ ]],
+0311 monitor:[['b 3.2 1.9 .12@0,1.9,0',[0,.9,.8]],['b .3 1.1 .2@0,.7,-.1;c .8 .08@0,.05,0',[0,-.8,0]],['b 1.2 .8 .08@.8,1.6,-.35',[0,0,-2]],['c .05 1.4@.5,.9,-.4;c .05 1.4@.7,.9,-.4',[1.6,-.4,-1.
+■ 2]]]};
+0312 OFF.forEach(o=>{const [id,n,c,d,ps,ss,sf]=o;const pre=id.slice(0,3).toUpperCase();
+0313 const comps=ps.map((p,i)=>{const sh=i%3;return {id:pre+'-0'+(i+1),key:'p'+i,name:p[0],cat:'Component',g:sh==0?B(1.9,.32,1.1):sh==1?Cy(.62,.32):B(1.3,.3,.8),p:[0,i*.5,0],e:[(i%2?1:-1)*1.3,i*
+■ .45,(i%3-1)*.8],col:[0x873F4B,0xD8BDB4,0x512B34,0xBBB5AD][i%4],desc:p[1],fn:p[1],faults:[p[2]],rel:ps.map((_,j)=>'p'+j).filter(k=>k!='p'+i).slice(0,2),maint:'Keep clean; avoid forcing.',rep:
+■ 'Replacement information not documented here.',rc:'Unknown'}});
+0314 const cu=CU[id];if(cu)comps.forEach((c,i)=>{try{c.g=GS(cu[i][0]);c.p=[0,0,0];c.e=cu[i][1];c.o=cu[i][2]}catch(e){console.warn('geo',id,i,e)}});const SYM={},CAUSES={};ss.forEach((q,k)=>{SYM['
+■ s'+k]=[q[0],q[1]];CAUSES['s'+k]=[{t:q[2],c:q[3].map(x=>'p'+x),conf:'Low',why:q[4],alt:'Other contributing factors or user error',chk:q[5]}]});
+0315 DB.push({id,n,c,d,comps,SYM,CAUSES,FACT:FA(3,3,3,2),MAINT:MT('Wipe with a dry or lightly damp cloth.',sf||'Follow the manufacturer guidance; ask an adult or qualified person for anything be
+■ yond cleaning.'),schem:cu?0:1})});
+0316 let BOOT=0;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('s');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('s'),2200)}
+0317 const FLOW=[['Product database','Each product is a structured record: components with functions, faults, relationships, repairability notes and maintenance text. Stored as JavaScript objects
+■ in this page.'],['Component relationship engine','Every component lists related components. Fault causes point at components by ID, which is how a symptom connects to parts.'],['Fault and m
+■ atching engine','Looks up documented symptoms for the selected product and matches your words against symptom keywords. Output is possible causes with confidence labels and safe checks. No m
+■ achine learning runs here.'],['3D anatomy lab','Three.js draws each component as its own mesh. Selection, explode, isolate and highlighting all use the same component IDs.'],['Optional Claud
+■ e layer','Only inside claude.ai, Ask REVERSE sends the product data and your description to Claude with an instruction not to invent parts. Everywhere else, including GitHub Pages, the rule-
+■ based engine answers.']];
+0318 function renderHow(){const n=DB.reduce((a,p)=>a+p.comps.length,0),sy=DB.reduce((a,p)=>a+Object.keys(p.SYM).length,0),ca=DB.reduce((a,p)=>a+Object.values(p.CAUSES).reduce((x,c)=>x+c.length,0)
+■ ,0);
+0319 const h=[['Products',DB.length],['Components',n],['Symptoms',sy],['Cause entries',ca]].map(([k,v])=>`<div><b>${v}</b><span class="m">${k}</span></div>`).join('');$('hs').innerHTML=h;$('hst'
+■ ).innerHTML=h;
+0320 $('fl').innerHTML=FLOW.map((f,i)=>`<div class="fb" onclick="this.classList.toggle('on')"><div class="m">0${i+1}</div><h3>${f[0]}</h3><p style="color:var(--rose);margin:.2em 0">${f[1]}</p></
+■ div>${i<FLOW.length-1?'<div class="fa"></div>':''}`).join('')}
+0321 function fillTrs(){const p=DB.find(x=>x.id==$('trp').value);$('trs').innerHTML=Object.entries(p.SYM).map(([k,s])=>`<option value="${k}">${s[0]}</option>`).join('')}
+0322 function runTrace(){const p=DB.find(x=>x.id==$('trp').value),k=$('trs').value,s=p.SYM[k],cs=p.CAUSES[k];if(!s){$('trr').innerHTML='<p>Pick a symptom first.</p>';return}
+0323 const nm=x=>p.comps.find(c=>c.key==x).name,direct=[...new Set(cs.flatMap(c=>c.c))],rel=[...new Set(direct.flatMap(x=>p.comps.find(q=>q.key==x).rel))].filter(x=>!direct.includes(x)).map(nm);
+0324 const st=[['1 · Lookup',`Product record “${p.n}” found. Symptom “${s[0]}” selected. Keywords on file: ${s[1]}.`],['2 · Causes on file',`${cs.length} documented cause(s): ${cs.map(c=>c.t).jo
+■ in('; ')}.`],['3 · Component links',`Directly named parts: ${direct.map(nm).join(', ')}.${rel.length?' Also related through the relationship list: '+rel.join(', ')+'.':''}`],['4 · Labels',`S
+■ tored confidence: ${cs.map(c=>c.conf).join(', ')}. Alternatives on file: ${cs.map(c=>c.alt).join('; ')}.`],['5 · Output',`Safe checks: ${cs.map(c=>c.chk).join(' ')} This is an educational po
+■ ssibility, not a diagnosis.`]];
+0325 $('trr').innerHTML=st.map(x=>`<div class="tr"><div class="m">${x[0]}</div>${x[1]}</div>`).join('')+'<p><button id="trh">SHOW THESE PARTS IN 3D</button></p>';
+0326 [...document.querySelectorAll('#trr .tr')].forEach((e,i)=>setTimeout(()=>e.classList.add('s'),250+i*450));
+0327 $('trh').onclick=()=>{setP(p.id);S.hl=direct;go('lab')}}
+0328 const JSTEPS=[['What you are looking at','REVERSE explores the inside of everyday objects. It is a static site: all data lives in the page and runs in your browser. This tour drives the real
+■ interface.',()=>go('home'),'#hst'],
+0329 ['Explore and search','Search covers parts, symptoms and maintenance across every product. Typing “spring” finds parts in several products.',()=>{go('explore');$('q').value='spring';renderEx
+■ plore()},'#q'],
+0330 ['Enter the anatomy lab','Each component is its own 3D mesh. Drag to orbit, scroll or pinch to zoom, tap a part to select it.',()=>{setP('stapler');go('lab')},'#labCv'],
+0331 ['Exploded view','The slider moves every part along its own explode vector, so you can see how parts relate.',()=>{go('lab');lab.setEx(1);$('sl').value=1;$('bEx').classList.add('on')},'#sl']
+■ ,
+0332 ['Inspect a component','Selecting a part shows what it does, related parts, common faults and repairability. This is general educational information.',()=>{go('lab');select('spring')},'#insp
+■ '],
+0333 ['Fault explorer','A symptom maps to documented causes and the components involved. These are possibilities, never a diagnosis.',()=>{S.sym='feed';save();go('faults')},'#sym'],
+0334 ['Ask REVERSE','Describe a problem in your own words. Outside claude.ai this build matches your words to documented symptoms; it does not use AI.',()=>{go('ask');$('at').value='My stapler ja
+■ ms and the staples come out bent';$('ab').click()},'#af'],
+0335 ['Repairability','Scores come from a six-factor rubric. Unknown is shown wherever no evidence is documented.',()=>go('repair'),'#rf'],
+0336 ['Repair or replace','Your own estimates go in and reasoning comes out. It never automatically says replace.',()=>{go('repair');$('age').value=4;$('rc').value=15;$('pc').value=40;decide()},'
+■ #dres'],
+0337 ['See the engine work','This trace runs the real lookup for one symptom, step by step.',()=>{go('how');$('trp').value='stapler';fillTrs();$('trs').value='bend';runTrace()},'#trr']];
+0338 let JI=-1;
+0339 function jshow(i){JI=i;document.querySelectorAll('.pulse').forEach(e=>e.classList.remove('pulse'));const st=JSTEPS[i];document.body.classList.add('jm');$('jp').style.display='block';
+0340 try{st[2]()}catch(e){console.warn(e)}
+0341 $('jn').textContent='JUDGE TOUR · STEP '+(i+1)+' OF '+JSTEPS.length;$('jt').textContent=st[0];$('jx').textContent=st[1];$('jb').disabled=i==0;$('jf').textContent=i==JSTEPS.length-1?'FINISH'
+■ :'NEXT';
+0342 setTimeout(()=>{const e=document.querySelector(st[3]);if(e&&JI==i){e.classList.add('pulse');e.scrollIntoView({behavior:'smooth',block:'center'})}},350)}
+0343 function judge(){jshow(0)}
+0344 function jend(){JI=-1;$('jp').style.display='none';document.body.classList.remove('jm');document.querySelectorAll('.pulse').forEach(e=>e.classList.remove('pulse'))}
+0345 function setP(id){const p=DB.find(x=>x.id==id);PID=id;PN=p.n;COMPS=p.comps;SYM=p.SYM;CAUSES=p.CAUSES;FACT=p.FACT;MAINT=p.MAINT;S.sym=null;S.comp=null;S.hl=[];S.last=null;isoOn=false;
+0346 if(lab&&lab.load)lab.load(COMPS);$('sch').style.display=p.schem?'block':'none';document.querySelectorAll('.pn').forEach(e=>e.textContent=PN);const ps=$('prodSel');if(ps)ps.value=id;
+0347 $('bIso').textContent='ISOLATE';$('bIso').classList.remove('on');$('bEx').classList.remove('on');$('sl').value=0;
+0348 renderChips();renderSym();renderInsp(null);renderFaults();renderRepair();renderMaint();$('chat').innerHTML='';if(BOOT)toast('Loaded '+PN+' · '+COMPS.length+' components')}
+0349 // ---------- STATE ----------
+0350 let S={sel:null,hl:[],sym:null,last:null};try{Object.assign(S,JSON.parse(localStorage.getItem('rev')||'{}'));S.sel=null}catch(e){}
+0351 const save=()=>{try{localStorage.setItem('rev',JSON.stringify({sym:S.sym}))}catch(e){}};
+0352 // ---------- NAV ----------
+0353 const PG=[['home','Home'],['explore','Explore'],['lab','Anatomy Lab'],['faults','Faults'],['ask','Ask REVERSE'],['repair','Repairability'],['maint','Maintenance'],['how','How it works'],['ab
+■ out','About']];
+0354 PG.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);$('nav').appendChild(b)});
+0355 function go(k){document.querySelectorAll('section.pg').forEach(s=>s.classList.toggle('on',s.id==k));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k==k)
+■ );window.scrollTo(0,0);if(k=='lab'){lab.resize();lab.hl(S.hl);setTimeout(()=>lab.resize(),50)}if(k=='how')renderHow();if(k=='repair')renderRepair();if(k=='faults')renderFaults()}
+0356 const ps0=document.createElement('select');ps0.id='prodSel';ps0.style.width='auto';ps0.setAttribute('aria-label','Product');DB.forEach(p=>ps0.add(new Option(p.n,p.id)));ps0.onchange=()=>setP
+■ (ps0.value);$('nav').appendChild(ps0);{const jb=document.createElement('button');jb.textContent='Judge tour';jb.className='p';jb.onclick=()=>judge();$('nav').insertBefore(jb,ps0)}
+0357 // ---------- 3D ----------
+0358 const MTL=h=>{const r=h>>16&255,g=h>>8&255,b=h&255;return Math.abs(r-g)<22&&Math.abs(g-b)<22&&r>140};
+0359 function viewer(el,auto,cs){
+0360 const r=new THREE.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.shadowMap.enabled=true;el.prepend(r.domElement);try{r.outputEncoding=THREE.sRGBE
+■ ncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;r.shadowMap.type=THREE.PCFSoftShadowMap}catch(e){}
+0361 const ld=document.createElement('div');ld.className='ld';ld.textContent='PREPARING 3D SCENE…';el.appendChild(ld);const lb=document.createElement('div');lb.className='lbs';lb.style.display='
+■ none';el.appendChild(lb);const tip=document.createElement('div');tip.className='tip';el.appendChild(tip);let lbEls=[];
+0362 const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.1,100);cam.position.set(5,4,6);
+0363 sc.add(new THREE.HemisphereLight(0xF0E9DF,0x512B34,.8));const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(4,8,5);dl.castShadow=true;sc.add(dl);try{dl.shadow.mapSize.set(1024,
+■ 1024);const sk=dl.shadow.camera;sk.left=-7;sk.right=7;sk.top=7;sk.bottom=-7;dl.shadow.bias=-.0005;const rim=new THREE.DirectionalLight(0xD8BDB4,.55);rim.position.set(-6,3,-5);sc.add(rim);con
+■ st gh=new THREE.GridHelper(14,28,0x873F4B,0x30282A);gh.position.y=-.1;gh.material.transparent=true;gh.material.opacity=.35;sc.add(gh)}catch(e){}
+0364 const gr=new THREE.Mesh(new THREE.CircleGeometry(7,40),new THREE.ShadowMaterial({opacity:.25}));gr.rotation.x=-Math.PI/2;gr.position.y=-.1;gr.receiveShadow=true;sc.add(gr);
+0365 const ct=new THREE.OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.autoRotate=!!auto;ct.autoRotateSpeed=1.2;ct.target.set(0,.5,0);
+0366 const ms={};let comps=cs;const build=()=>{for(const k in ms){sc.remove(ms[k]);delete ms[k]}comps.forEach(c=>{const m=new THREE.Mesh(c.g,new THREE.MeshStandardMaterial({color:c.col,metalness
+■ :MTL(c.col)?.65:.12,roughness:MTL(c.col)?.32:.5,transparent:true,side:c.w?THREE.DoubleSide:THREE.FrontSide,wireframe:!!c.wf}));m.position.set(...c.p);if(c.r)m.rotation.set(...c.r);m.castShad
+■ ow=true;m.receiveShadow=true;m.userData=c;sc.add(m);ms[c.key]=m});lb.innerHTML='';lbEls=comps.map(c=>{const e=document.createElement('span');e.textContent=c.name;lb.appendChild(e);return e})
+■ };build();
+0367 let ex=0,tx=0,iso=null,hl=[],hov=null,tw=null;const V={iso:[5,4,6],front:[0,.6,9],side:[9,.6,0],top:[0,10,.01]};
+0368 const api={ms,setEx(v){tx=v},get ex(){return tx},hl(a){hl=a},sel:null,onSel:null,
+0369 view(n){tw={to:new THREE.Vector3(...V[n]),t:0}},setLb(v){api.lbOn=v;lb.style.display=v?'block':'none'},load(c){comps=c;build();api.sel=null;iso=null;hl=[];tx=0;api.view('iso')},reset(){tx=
+■ 0;iso=null;api.sel=null;hl=[];api.view('iso');api.onSel&&api.onSel(null)},
+0370 isolate(k){iso=k},resize(){const w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}};
+0371 api.resize();addEventListener('resize',api.resize);
+0372 const rc=new THREE.Raycaster(),mp=new THREE.Vector2();let d0=null;
+0373 const pick=e=>{const b=r.domElement.getBoundingClientRect();mp.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);rc.setFromCamera(mp,cam);const h=rc.intersectObjects(Objec
+■ t.values(ms).filter(m=>m.visible));return h[0]?h[0].object.userData:null};
+0374 r.domElement.addEventListener('pointerdown',e=>d0=[e.clientX,e.clientY]);
+0375 r.domElement.addEventListener('pointerup',e=>{if(!d0||Math.hypot(e.clientX-d0[0],e.clientY-d0[1])>5||!api.onSel)return;const c=pick(e);api.sel=c?c.key:null;api.onSel(c)});
+0376 r.domElement.addEventListener('pointermove',e=>{if(e.pointerType=='mouse'&&!e.buttons){const c=pick(e);hov=c?c.key:null;r.domElement.style.cursor=c?'pointer':'grab';if(c){const b=r.domEleme
+■ nt.getBoundingClientRect();tip.textContent=c.name;tip.style.left=(e.clientX-b.left+14)+'px';tip.style.top=(e.clientY-b.top+14)+'px';tip.style.display='block'}else tip.style.display='none'}})
+■ ;
+0377 (function loop(){requestAnimationFrame(loop);if(!el.offsetParent)return;ex+=(tx-ex)*.1;
+0378 if(tw){cam.position.lerp(tw.to,.1);if(cam.position.distanceTo(tw.to)<.05)tw=null}
+0379 comps.forEach(c=>{const m=ms[c.key];m.position.set(c.p[0]+c.e[0]*ex*1.4,c.p[1]+c.e[1]*ex*1.4,c.p[2]+c.e[2]*ex*1.4);
+0380 const on=api.sel==c.key,h=hl.includes(c.key),ho=hov==c.key;m.material.emissive.setHex(on?0x873F4B:h?0x6b2d3a:ho?0x3a1b22:0);m.material.emissiveIntensity=on?.9:h?.7:.5;
+0381 m.material.opacity=iso&&iso!=c.key?.08:(c.o||1);m.visible=true});
+0382 ct.update();r.render(sc,cam);if(!api._r){api._r=1;ld.remove()}if(api.lbOn){try{const w=el.clientWidth,h=el.clientHeight;comps.forEach((c,i)=>{const v=ms[c.key].position.clone().project(cam
+■ ),e=lbEls[i];e.style.display=v.z<1?'block':'none';e.style.left=((v.x*.5+.5)*w)+'px';e.style.top=((-v.y*.5+.5)*h)+'px'})}catch(er){}}})();
+0383 return api}
+0384 let hero,story,lab;
+0385 try{if(window.__no3d)throw new Error('no3d');hero=viewer($('heroCv'),true,STAP);story=viewer($('storyCv'),0,STAP);lab=viewer($('labCv'),0,STAP)}catch(e){document.querySelectorAll('.cv').forE
+■ ach(c=>c.insertAdjacentHTML('afterbegin','<p style="padding:20px;position:relative;z-index:3;color:var(--rose)">3D view unavailable here (WebGL or the Three.js library could not load). Compo
+■ nent names, functions and faults are still available through the part chips and inspector.</p>'));hero=story=lab={resize(){},hl(){},setLb(){},setEx(){},view(){},reset(){},isolate(){}}}
+0386 // story: scroll drives explosion
+0387 const FR=[['The object','The assembled stapler.'],['The structure','Major assemblies begin to separate.'],['The components','Individual parts become visible.'],['The details','Each part has
+■ a role and failure modes.'],['The question','What could go wrong, and what can be repaired?']];
+0388 function onScroll(){const s=$('story'),r=s.getBoundingClientRect(),p=Math.min(1,Math.max(0,-r.top/(r.height-innerHeight)));story.setEx(p);const i=Math.min(4,Math.floor(p*5));$('fr').textCont
+■ ent='Frame 0'+(i+1);$('ft').textContent=FR[i][0];$('fd').textContent=FR[i][1];
+0389 document.querySelectorAll('.rv').forEach(e=>{if(e.getBoundingClientRect().top<innerHeight*.9)e.classList.add('s')})}
+0390 addEventListener('scroll',onScroll,{passive:true});onScroll();
+0391 // ---------- LAB ----------
+0392 function renderInsp(c){const p=$('insp');
+0393 if(!c){p.innerHTML='<div class="m">Component inspector</div><h3>Select a part</h3><p style="color:var(--rose)">Tap any component in the 3D view, or choose one below.</p>';return}
+0394 const rel=c.rel.map(k=>byKey(k).name).join(', ');
+0395 p.innerHTML=`<div class="m">${c.id} · ${c.cat} · ${PN}</div><h3>${c.name}</h3><p>${c.desc}</p>
+0396 <div class="m">What it does</div><p>${c.fn}</p><div class="m">Related parts</div><p>${rel}</p>
+0397 <div class="m">Common faults (general)</div><p>${c.faults.join('; ')}</p><div class="m">Repairability</div><p>${c.rep} <small>Complexity: ${c.rc}</small></p>
+0398 <div class="m">Maintenance</div><p>${c.maint}</p><small>General educational information, not model-specific.</small>
+0399 <p><button class="p" id="inv">INVESTIGATE THIS COMPONENT</button></p>`;
+0400 $('inv').onclick=()=>{S.sym=null;S.comp=c.key;S.hl=[c.key,...c.rel];go('faults')}}
+0401 function select(k){const c=k?byKey(k):null;if(lab.sel!==undefined)lab.sel=k;renderInsp(c);document.querySelectorAll('#chipsC button').forEach(b=>b.classList.toggle('on',b.dataset.k==k))}
+0402 if(lab.onSel!==undefined||lab.ms)lab.onSel=c=>select(c?c.key:null);
+0403 function renderChips(){$('chipsC').innerHTML='';COMPS.forEach(c=>{const b=document.createElement('button');b.textContent=c.name;b.dataset.k=c.key;b.onclick=()=>select(c.key);$('chipsC').appe
+■ ndChild(b)})}
+0404 let isoOn=false;
+0405 $('bEx').onclick=function(){const o=lab.ex<.5;lab.setEx(o?1:0);$('sl').value=o?1:0;this.classList.toggle('on',o)};
+0406 $('sl').oninput=e=>{lab.setEx(+e.target.value);$('bEx').classList.toggle('on',+e.target.value>0)};
+0407 $('bIso').onclick=function(){if(!lab.sel){this.textContent='SELECT A PART FIRST';setTimeout(()=>this.textContent='ISOLATE',1500);return}isoOn=!isoOn;lab.isolate(isoOn?lab.sel:null);this.clas
+■ sList.toggle('on',isoOn);this.textContent=isoOn?'RESTORE':'ISOLATE'};
+0408 $('vw').onchange=e=>lab.view(e.target.value);
+0409 $('bRs').onclick=()=>{isoOn=false;$('bIso').textContent='ISOLATE';$('bIso').classList.remove('on');$('bEx').classList.remove('on');$('sl').value=0;S.hl=[];lab.reset();select(null)};
+0410 renderInsp(null);
+0411 // ---------- EXPLORE + SEARCH ----------
+0412 DB.map(p=>p.c).filter((c,i,a)=>a.indexOf(c)==i).forEach(c=>{const o=document.createElement('option');o.textContent=c;$('cat').appendChild(o)});
+0413 const hit=(p,q)=>[p.n,p.c,p.d,...p.comps.map(c=>c.name+c.desc+c.faults.join()),...Object.values(p.SYM).map(s=>s[0]),...p.MAINT.map(m=>m[0]+m[1])].join(' ').toLowerCase().includes(q);
+0414 function renderExplore(){const q=$('q').value.toLowerCase().trim(),ct=$('cat').value,esc=q.replace(/</g,'&lt;');
+0415 const ps=DB.filter(p=>(!ct||p.c==ct)&&(!q||hit(p,q)));let h='';
+0416 h+=ps.length?'<div class="grid">'+ps.map(p=>`<div class="card"><div class="m">${p.c}</div><h3>${p.n}</h3><p>${p.d}</p><div class="m">${p.comps.length} documented components</div><p><button
+■ class="p" onclick="setP('${p.id}');go('lab')">EXPLORE</button></p></div>`).join('')+'</div>':'<p>No products match “'+esc+'”.</p>';
+0417 if(q){const it=[];DB.forEach(p=>{p.comps.filter(c=>(c.name+c.desc+c.faults.join()).toLowerCase().includes(q)).forEach(c=>it.push(`<button onclick="setP('${p.id}');go('lab');select('${c.key}
+■ ')">${p.n}: ${c.name}</button>`));Object.entries(p.SYM).filter(([k,s])=>s[0].toLowerCase().includes(q)).forEach(([k,s])=>it.push(`<button onclick="setP('${p.id}');S.sym='${k}';go('faults')">
+■ ${p.n}: ${s[0]}</button>`))});if(it.length)h+='<h3 style="margin-top:18px">Matching parts &amp; symptoms</h3><div class="chips">'+it.join('')+'</div>'}
+0418 $('res').innerHTML=h}
+0419 $('q').oninput=$('cat').onchange=renderExplore;renderExplore();
+0420 // ---------- FAULTS ----------
+0421 function renderSym(){$('sym').innerHTML='';Object.entries(SYM).forEach(([k,s])=>{const b=document.createElement('button');b.textContent=s[0];b.dataset.k=k;b.onclick=()=>{S.sym=k;S.comp=null;
+■ save();renderFaults()};$('sym').appendChild(b)})}
+0422 function renderFaults(){document.querySelectorAll('#sym button').forEach(b=>b.classList.toggle('on',b.dataset.k==S.sym));let h='';
+0423 if(S.sym){h+=chain(S.sym);const hs=new Set();CAUSES[S.sym].forEach(c=>c.c.forEach(k=>hs.add(k)));S.hl=[...hs]}
+0424 else if(S.comp){const c=byKey(S.comp);h=`<div class="glass panel"><div class="m">Investigating</div><h3>${c.name}</h3><p>${c.faults.join('; ')}</p><div class="m">Symptoms it may contribute
+■ to</div><div class="chips">${Object.entries(SYM).filter(([k])=>CAUSES[k].some(x=>x.c.includes(c.key))).map(([k,s])=>`<button onclick="S.sym='${k}';save();renderFaults()">${s[0]}</button>`).j
+■ oin('')}</div></div>`}
+0425 0426 else h='<p style="color:var(--rose)">Choose a symptom above, or investigate a component from the Anatomy Lab.</p>';
+h+='<p><button onclick="go(\'lab\')">VIEW HIGHLIGHTED PARTS IN 3D</button></p>';$('fres').innerHTML=h;lab.hl(S.hl)}
+0427 function chain(k){return `<small>Educational possibilities, not confirmed diagnoses. Confidence is a rough rule-based label.</small>`+CAUSES[k].map(c=>`<div class="glass panel" style="margin
+■ :10px 0"><div class="chain"><span>${PN}</span><i>→</i><span>${SYM[k][0]}</span><i>→</i><span>${c.t}</span><i>→</i>${c.c.map(x=>`<span>${byKey(x).name}</span>`).join('')}</div><p>${c.why}</p>
+■ <p><span class="m">Confidence</span> ${c.conf} · <span class="m">Alternative</span> ${c.alt}</p><p><span class="m">Safe check</span> ${c.chk}</p><p><small>Missing info: the model, its age, a
+■ nd how long it has happened.</small></p></div>`).join('')}
+0428 // ---------- ASK ----------
+0429 function matchSym(t){const w=t.toLowerCase().match(/[a-z']+/g)||[];let best=null,bs=0;for(const[k,s]of Object.entries(SYM)){const sc=s[1].split(' ').filter(x=>w.some(y=>y.startsWith(x.slice(
+■ 0,4)))).length;if(sc>bs){bs=sc;best=k}}return best}
+0430 function answer(t){const lo=t.toLowerCase();let h='';
+0431 const cm=COMPS.filter(c=>lo.includes(c.name.toLowerCase())||lo.includes(c.key));
+0432 if(S.last&&/why|other|else|alternative|replace|how does/.test(lo)){const cs=CAUSES[S.last];
+0433 if(/replace/.test(lo)){const ids=[...new Set(cs.flatMap(c=>c.c))].map(byKey);return {h:'<b>Repairability of the parts involved</b><ul>'+ids.map(c=>`<li>${c.name}: ${c.rep}</li>`).join('')+
+■ '</ul><p>Replacement availability and cost are not documented here, so I can’t say replacement makes sense yet.</p>',hl:ids.map(c=>c.key)}}
+0434 0435 0436 0437 if(/other|else|alternative/.test(lo))return {h:'<b>Other possibilities</b><ul>'+cs.map(c=>`<li>${c.alt} (instead of: ${c.t})</li>`).join('')+'</ul>',hl:null};
+if(/why/.test(lo))return {h:'<b>Why these parts?</b><ul>'+cs.map(c=>`<li>${c.t}: ${c.why}</li>`).join('')+'</ul>',hl:null}}
+if(cm.length&&/how|what|does|work/.test(lo)&&!matchSym(t)){const c=cm[0];return {h:`<b>${c.name}</b><p>${c.fn}</p><p>Works with: ${c.rel.map(k=>byKey(k).name).join(', ')}.</p>`,hl:[c.key]}}
+const k=matchSym(t);if(!k)return {h:`<b>I don’t have enough information</b><p>I could not match that to a documented symptom for the ${PN} (${Object.values(SYM).map(s=>s[0].toLowerCase()).j
+■ oin('; ')}). Please describe what happens, and when.</p>`,hl:null};
+0438 S.last=k;S.sym=k;save();const cs=CAUSES[k],ids=[...new Set(cs.flatMap(c=>c.c))];
+0439 h=`<b>1. Problem summary</b><p>You describe: “${t.replace(/</g,'&lt;')}” — closest documented symptom: <i>${SYM[k][0]}</i>.</p><b>2. Possible causes</b><ul>${cs.map(c=>`<li>${c.t} (${c.conf
+■ }): ${c.why}</li>`).join('')}</ul><b>3. Components to investigate</b><p>${ids.map(x=>byKey(x).name).join(', ')} (highlighted in the Anatomy Lab)</p><b>4. What to check</b><ul>${cs.map(c=>`<l
+■ i>${c.chk}</li>`).join('')}</ul><b>5. Repairability</b><p>${ids.map(x=>byKey(x).name+': '+byKey(x).rep).join(' ')} Replacement availability is Unknown.</p><b>6. Recommendation</b><p>Start wi
+■ th the safe checks. If it persists, ask an adult or qualified person; do not force or dismantle the mechanism.</p>`;
+0440 return {h,hl:ids}}
+0441 let SAMP=null,DIC=null,DLS=null,HIST=[],REP=[];
+0442 if(window.claude&&claude.use){claude.use('sample').then(x=>SAMP=x).catch(()=>{});claude.use('dictation').then(x=>{DIC=x;if(x)$('mic').style.display=''}).catch(()=>{});claude.use('downloads')
+■ .then(x=>{DLS=x;if(x)$('dl').style.display=''}).catch(()=>{})}
+0443 const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;'),md=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+0444 const ctxJ=()=>JSON.stringify({product:PN,components:COMPS.map(c=>({name:c.name,function:c.fn,relatedTo:c.rel.map(k=>byKey(k).name),commonFaults:c.faults,repairability:c.rep})),documentedSym
+■ ptoms:Object.entries(SYM).map(([k,s])=>({symptom:s[0],possibleCauses:CAUSES[k].map(c=>({cause:c.t,parts:c.c.map(x=>byKey(x).name),why:c.why,confidence:c.conf}))}))});
+0445 function hlFrom(t){const ids=COMPS.filter(c=>t.toLowerCase().includes(c.name.toLowerCase())).map(c=>c.key);if(ids.length){S.hl=ids;lab.hl(ids)}}
+0446 $('ab').onclick=async()=>{const t=$('at').value.trim(),c=$('chat');if(t.length<4){c.insertAdjacentHTML('beforeend','<p class="m">Please describe the problem in a few words.</p>');return}
+0447 c.insertAdjacentHTML('beforeend',`<div class="glass panel" style="margin:8px 0"><div class="m">You</div>${esc(t)}</div>`);const box=document.createElement('div');box.className='light';box.s
+■ tyle.margin='8px 0';c.appendChild(box);$('at').value='';box.scrollIntoView({behavior:'smooth',block:'nearest'});
+0448 const fb=lab=>{const a=answer(t);if(a.hl){S.hl=a.hl;lab_hl(a.hl)}box.innerHTML=`<div class="m">REVERSE · rule-based ${lab}</div>`+a.h;REP.push('## '+t+'\n'+box.innerText)};
+0449 const lab_hl=h=>lab.hl(h);
+0450 if(!SAMP){fb('(AI is not available here)');return}
+0451 const head='<div class="m">REVERSE · AI answer grounded in the product database</div>';box.innerHTML=head+'<p>Thinking…</p>';
+0452 const prompt=`You are REVERSE, an educational product-anatomy assistant. Use ONLY the product data below. Never invent parts, specs, prices or facts that are not in it; if information is mi
+■ ssing, say so. Give educational possibilities, not diagnoses. Do not give instructions for dismantling or anything hazardous; recommend an adult or qualified person when needed. Answer with
+■ these bold headings for a new problem: **Problem summary**, **Possible causes**, **Components to investigate** (use exact part names), **What to check** (safe, non-invasive), **Repairability
+■ ** (separate documented info from uncertainty), **Recommendation**. For follow-up questions answer directly and briefly. Keep it under 300 words.\n\nPRODUCT DATA:\n${ctxJ()}\n\nCONVERSATION
+■ SO FAR:\n${HIST.map(h=>h.r+': '+h.t).join('\n')}\n\nUSER: ${t}`;
+0453 try{const r=await SAMP(prompt,{cache:false,onText:({text})=>{box.innerHTML=head+md(text)}});box.innerHTML=head+md(r.text);HIST.push({r:'USER',t},{r:'REVERSE',t:r.text});hlFrom(r.text);REP.p
+■ ush('## '+t+'\n'+r.text)}
+0454 catch(e){if(e&&e.text)box.innerHTML=head+md(e.text);else fb('fallback (AI call failed)')}
+0455 box.scrollIntoView({behavior:'smooth',block:'nearest'})};
+0456 $('mic').onclick=async()=>{if(!DIC)return;try{DIC.onFinal(({text})=>{$('at').value+=(($('at').value?' ':'')+text)});DIC.onState(({state})=>$('mic').textContent=state=='listening'?'■ LISTENIN
+■ G…':'■ SPEAK');if($('mic').textContent.includes('LISTEN'))await DIC.stop();else await DIC.start()}catch(e){$('mic').style.display='none'}};
+0457 $('dl').onclick=async()=>{if(!REP.length){$('dl').textContent='ASK SOMETHING FIRST';setTimeout(()=>$('dl').textContent='■ SAVE REPORT',1500);return}
+0458 try{await DLS.save({filename:'reverse-investigation.md',data:`# REVERSE investigation: ${PN}\nEducational possibilities, not diagnoses.\n\n`+REP.join('\n\n')})}catch(e){}};
+0459 // ---------- DEMO TOUR ----------
+0460 let TT=[];function tour(){TT.forEach(clearTimeout);TT=[];const b=$('tb2'),say=m=>{b.style.display='block';b.textContent=m};
+0461 const st=[[0,()=>{setP('stapler');go('explore');$('q').value='';renderExplore();say('1/7 Browse everyday objects. Search covers parts, symptoms and care.')}],
+0462 [3500,()=>{$('q').value='spring';renderExplore();say('2/7 Search finds parts and symptoms across all products.')}],
+0463 [7000,()=>{setP('stapler');go('lab');say('3/7 Anatomy Lab: every part is its own 3D mesh. Drag to orbit.')}],
+0464 [10000,()=>{lab.setEx(1);$('sl').value=1;$('bEx').classList.add('on');say('4/7 Exploded view separates the parts.')}],
+0465 [13500,()=>{select('spring');say('5/7 Tap a part to inspect what it does and how it fails.')}],
+0466 [17500,()=>{S.sym='feed';go('faults');say('6/7 Symptom → cause → component, never a confirmed diagnosis.')}],
+0467 [21500,()=>{go('repair');say('7/7 Transparent repairability, with Unknown where evidence is missing.')}],
+0468 [26000,()=>{b.style.display='none';go('ask')}]];st.forEach(([t,fn])=>TT.push(setTimeout(fn,t)))}
+0469 addEventListener('pointerdown',e=>{if(TT.length&&!e.target.closest('#tb2')){TT.forEach(clearTimeout);TT=[];$('tb2').style.display='none'}},true);
+0470 // ---------- REPAIRABILITY / MAINT / DECISION ----------
+0471 function renderRepair(){const kn=FACT.filter(f=>f[1]!=null),avg=kn.reduce((a,f)=>a+f[1],0)/kn.length;
+0472 $('rf').innerHTML=FACT.map(f=>`<div class="card"><div class="m">${f[0]}</div><h3>${f[1]==null?'Unknown':f[1]+' / 5'}</h3><div class="bar"><div style="width:0" data-w="${f[1]==null?0:f[1]*20
+■ }%"></div></div><p>${f[2]}</p></div>`).join('');
+0473 $('rs').innerHTML=`<b>Overall (known factors only): ${avg.toFixed(1)} / 5</b> — based on ${kn.length} of ${FACT.length} factors; ${FACT.length-kn.length} Unknown. Limitation: general design
+■ assessment, not a specific model.`;
+0474 setTimeout(()=>document.querySelectorAll('.bar div').forEach(b=>b.style.width=b.dataset.w),50)}
+0475 function renderMaint(){$('mg').innerHTML=MAINT.map(m=>`<div class="card"><div class="m">${m[0]}</div><p>${m[1]}</p></div>`).join('')}
+0476 function decide(){const a=$('age').value,rc=$('rc').value,pc=$('pc').value,o=$('dres');
+0477 if(rc===''||pc===''||+rc<0||+pc<0||+pc==0){o.innerHTML='<small>Enter a repair cost and a replacement cost above 0 to compare.</small>';return}
+0478 const r=+rc/+pc,pa=$('pa').value,w=[];let v;
+0479 w.push(`Repair costs ${(r*100).toFixed(0)}% of replacement.`);
+0480 if(pa=='No')w.push('Parts are not available, so repair may not be possible.');if(pa=='Unknown')w.push('Parts availability is unknown, which adds uncertainty to the repair cost.');
+0481 if($('op').value=='Yes')w.push('Other problems suggest more repairs may follow.');if($('cond').value=='Poor')w.push('Poor condition weakens the case for repair.');
+0482 if(a!==''&&+a>8)w.push('An older product may have less remaining life.');
+0483 w.push('Also consider environmental impact and any sentimental value; replacement is not automatically better.');
+0484 v=pa=='No'?'Repair looks impractical':r<.4?'Repair looks reasonable':r<.75?'Close call':'Replacement may be more sensible';
+0485 o.innerHTML=`<h3>${v}</h3><ul>${w.map(x=>`<li>${x}</li>`).join('')}</ul><small>Costs are your estimates; REVERSE does not supply prices.</small>`}
+0486 ['age','cond','rc','pc','pa','op'].forEach(i=>$(i).oninput=$(i).onchange=decide);decide();
+0487 renderHow();$('trp').innerHTML=DB.map(p=>`<option value="${p.id}">${p.n}</option>`).join('');$('trp').onchange=fillTrs;fillTrs();$('trb').onclick=runTrace;
+0488 $('jf').onclick=()=>JI>=JSTEPS.length-1?jend():jshow(JI+1);$('jb').onclick=()=>JI>0&&jshow(JI-1);$('je').onclick=jend;
+0489 $('bLb').onclick=function(){const on=!this.classList.contains('on');this.classList.toggle('on',on);if(lab.setLb)lab.setLb(on)};
+0490 [['stapler','My stapler jams and the staples come out bent','Stapler jams'],['umbrella','My umbrella opens normally but folds back in light wind','Umbrella folds in wind'],['pen','My pen ski
+■ ps and writes faintly','Pen skips'],['tape','The tape measure will not retract','Tape will not retract'],['chair','My office chair slowly sinks while I sit','Chair sinks']].forEach(([pid,t,l
+■ ])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>{setP(pid);$('at').value=t;$('ab').click()};$('scn').appendChild(b)});
+0491 addEventListener('keydown',e=>{if(e.key=='Escape'&&JI>=0)jend()});
+0492 setP('stapler');BOOT=1;go('home');
+0493 </script></body></html
