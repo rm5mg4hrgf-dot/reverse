@@ -418,7 +418,7 @@ $('mic').onclick=async()=>{if(!DIC)return;try{DIC.onFinal(({text})=>{$('at').val
 $('dl').onclick=async()=>{if(!REP.length){$('dl').textContent='ASK SOMETHING FIRST';setTimeout(()=>$('dl').textContent='⬇ SAVE REPORT',1500);return}
  try{await DLS.save({filename:'reverse-investigation.md',data:`# REVERSE investigation: ${PN}\nEducational possibilities, not diagnoses.\n\n`+REP.join('\n\n')})}catch(e){}};
 // ---------- DEMO TOUR ----------
-let TT=[];function tour(){TT.forEach(clearTimeout);TT=[];const b=$('tb2'),say=m=>{b.style.display='block';b.textContent=m};
+let TT=[];function stopTour(){TT.forEach(clearTimeout);TT=[];$('tb2').style.display='none'}function tour(){stopTour();const b=$('tb2'),say=m=>{b.style.display='block';b.innerHTML='<span>'+m+'</span> <button type="button" onclick="stopTour()" style="margin-left:10px;padding:5px 9px">CLOSE DEMO ×</button>'};
  const st=[[0,()=>{setP('stapler');go('explore');$('q').value='';renderExplore();say('1/7 Browse everyday objects. Search covers parts, symptoms and care.')}],
  [3500,()=>{$('q').value='spring';renderExplore();say('2/7 Search finds parts and symptoms across all products.')}],
  [7000,()=>{setP('stapler');go('lab');say('3/7 Anatomy Lab: every part is its own 3D mesh. Drag to orbit.')}],
@@ -427,7 +427,7 @@ let TT=[];function tour(){TT.forEach(clearTimeout);TT=[];const b=$('tb2'),say=m=
  [17500,()=>{S.sym='feed';go('faults');say('6/7 Symptom → cause → component, never a confirmed diagnosis.')}],
  [21500,()=>{go('repair');say('7/7 Transparent repairability, with Unknown where evidence is missing.')}],
  [26000,()=>{b.style.display='none';go('ask')}]];st.forEach(([t,fn])=>TT.push(setTimeout(fn,t)))}
-addEventListener('pointerdown',e=>{if(TT.length&&!e.target.closest('#tb2')){TT.forEach(clearTimeout);TT=[];$('tb2').style.display='none'}},true);
+// The guided tour continues while users interact; close it explicitly with its button.
 // ---------- REPAIRABILITY / MAINT / DECISION ----------
 function renderRepair(){const kn=FACT.filter(f=>f[1]!=null),avg=kn.reduce((a,f)=>a+f[1],0)/kn.length;
  $('rf').innerHTML=FACT.map(f=>`<div class="card"><div class="m">${f[0]}</div><h3>${f[1]==null?'Unknown':f[1]+' / 5'}</h3><div class="bar"><div style="width:0" data-w="${f[1]==null?0:f[1]*20}%"></div></div><p>${f[2]}</p></div>`).join('');
